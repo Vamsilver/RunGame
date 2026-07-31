@@ -3,6 +3,7 @@ using System;
 using RunGame.Bonus;
 using RunGame.Collectibles;
 using RunGame.Effects;
+using RunGame.Gameplay;
 using RunGame.Obstacles;
 using RunGame.Player;
 using Unity.Cinemachine;
@@ -40,6 +41,7 @@ namespace RunGame.EditorTools
             Require(UnityEngine.Object.FindFirstObjectByType<OscillatingObstacle>() != null, "Moving obstacle missing");
             Require(UnityEngine.Object.FindFirstObjectByType<ExplosiveBarrel>() != null, "Explosive barrel missing");
             Require(UnityEngine.Object.FindFirstObjectByType<MovementParticleController>() != null, "Movement particles missing");
+            Require(UnityEngine.Object.FindFirstObjectByType<LevelFinishSequence>() != null, "Finish sequence missing");
             Debug.Log("RunGame validation passed: all required portfolio mechanics are present.");
         }
 
