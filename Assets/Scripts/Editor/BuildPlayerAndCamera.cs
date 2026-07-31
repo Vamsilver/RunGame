@@ -60,6 +60,37 @@ namespace RunGame.EditorTools
             CreateWall(new Vector3(-11f, 0.75f, 14f), new Vector3(0.5f, 2.5f, 46f));
             CreateWall(new Vector3(11f, 0.75f, 14f), new Vector3(0.5f, 2.5f, 46f));
             CreateWall(new Vector3(0f, 0.75f, 36.75f), new Vector3(22f, 2.5f, 0.5f));
+            CreateRouteMarker(new Vector3(-5.8f, 0.025f, 14f));
+            CreateRouteMarker(new Vector3(5.8f, 0.025f, 14f));
+            CreateStartGate();
+        }
+
+        private static void CreateRouteMarker(Vector3 position)
+        {
+            GameObject line = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            line.name = "Route Edge Light";
+            line.transform.position = position;
+            line.transform.localScale = new Vector3(0.12f, 0.05f, 43f);
+            Object.DestroyImmediate(line.GetComponent<Collider>());
+            line.GetComponent<Renderer>().sharedMaterial = CreateMaterial("RouteLightMaterial", new Color(0.04f, 0.65f, 0.88f), 0.2f, 0.75f);
+        }
+
+        private static void CreateStartGate()
+        {
+            Material material = CreateMaterial("StartGateMaterial", new Color(0.04f, 0.85f, 0.72f), 0.25f, 0.72f);
+            foreach (float x in new[] { -4.5f, 4.5f })
+            {
+                GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                pillar.name = "Start Gate Pillar";
+                pillar.transform.position = new Vector3(x, 2f, -7f);
+                pillar.transform.localScale = new Vector3(0.45f, 4f, 0.45f);
+                pillar.GetComponent<Renderer>().sharedMaterial = material;
+            }
+            GameObject top = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            top.name = "Start Gate Header";
+            top.transform.position = new Vector3(0f, 4f, -7f);
+            top.transform.localScale = new Vector3(9.4f, 0.45f, 0.45f);
+            top.GetComponent<Renderer>().sharedMaterial = material;
         }
 
         private static void CreateWall(Vector3 position, Vector3 scale)
@@ -107,13 +138,16 @@ namespace RunGame.EditorTools
             mainCameraObject.AddComponent<AudioListener>();
             mainCameraObject.AddComponent<CinemachineBrain>();
 
-            GameObject cameraObject = new("Player Virtual Camera");
+            GameObject cameraObject = new("CM Virtual Camera - Player Follow");
             CinemachineCamera virtualCamera = cameraObject.AddComponent<CinemachineCamera>();
             virtualCamera.Follow = player;
             virtualCamera.LookAt = player;
-            virtualCamera.Lens.FieldOfView = 55f;
+            virtualCamera.Lens.FieldOfView = 58f;
             CinemachineFollow follow = cameraObject.AddComponent<CinemachineFollow>();
-            follow.FollowOffset = new Vector3(0f, 7f, -10f);
+            follow.FollowOffset = new Vector3(0f, 6.2f, -8.5f);
+            var tracker = follow.TrackerSettings;
+            tracker.PositionDamping = new Vector3(0.45f, 0.65f, 0.55f);
+            follow.TrackerSettings = tracker;
             cameraObject.AddComponent<CinemachineRotationComposer>();
         }
 
