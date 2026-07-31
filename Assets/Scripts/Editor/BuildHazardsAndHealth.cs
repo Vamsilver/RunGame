@@ -40,8 +40,8 @@ namespace RunGame.EditorTools
             GameObject previous = GameObject.Find("Hazards");
             if (previous != null) Object.DestroyImmediate(previous);
             GameObject root = new("Hazards");
-            CreateMovingBlock(root.transform, new Vector3(-4f, 0.8f, 7f), new Vector3(8f, 0f, 0f), "Moving Crusher A");
-            CreateMovingBlock(root.transform, new Vector3(4f, 0.8f, 18f), new Vector3(-8f, 0f, 0f), "Moving Crusher B");
+            CreateRotatingSweeper(root.transform, new Vector3(0f, 0f, 11f));
+            CreateMovingBlock(root.transform, new Vector3(-4.5f, 1.05f, 19f), new Vector3(9f, 0f, 0f), "Moving Crusher");
             GameObject barrel = CreateBarrel(root.transform, new Vector3(0f, 1f, 27f), "Explosive Barrel");
             EnsureFolder("Assets/Prefabs/Obstacles");
             GameObject barrelPrefab = PrefabUtility.SaveAsPrefabAssetAndConnect(
@@ -49,6 +49,34 @@ namespace RunGame.EditorTools
             GameObject secondBarrel = (GameObject)PrefabUtility.InstantiatePrefab(barrelPrefab, root.transform);
             secondBarrel.name = "Explosive Barrel 02";
             secondBarrel.transform.position = new Vector3(4f, 1f, 30f);
+        }
+
+        private static void CreateRotatingSweeper(Transform parent, Vector3 position)
+        {
+            GameObject assembly = new("Rotating Damage Sweeper");
+            assembly.transform.SetParent(parent);
+            assembly.transform.position = position;
+
+            GameObject pillar = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            pillar.name = "Sweeper Hub";
+            pillar.transform.SetParent(assembly.transform, false);
+            pillar.transform.localPosition = new Vector3(0f, 0.8f, 0f);
+            pillar.transform.localScale = new Vector3(0.7f, 0.8f, 0.7f);
+            pillar.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("HazardDarkMaterial", new Color(0.035f, 0.045f, 0.055f), 0.65f);
+
+            GameObject arm = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            arm.name = "Rotating Damage Arm";
+            arm.transform.SetParent(assembly.transform, false);
+            arm.transform.localPosition = new Vector3(0f, 1.1f, 0f);
+            arm.transform.localScale = new Vector3(9.5f, 0.65f, 0.8f);
+            arm.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("HazardMaterial", new Color(0.92f, 0.08f, 0.06f), 0.25f);
+            Rigidbody body = arm.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            arm.AddComponent<RotatingObstacle>();
+            arm.AddComponent<DamageObstacle>();
+            AddWarningStripes(arm.transform, 9);
+            CreateWorldLabel(assembly.transform, "ROTATING HAZARD", new Vector3(0f, 2.5f, 0f), new Color(1f, 0.25f, 0.1f));
         }
 
         private static void CreateMovingBlock(Transform parent, Vector3 position, Vector3 offset, string name)
@@ -67,6 +95,8 @@ namespace RunGame.EditorTools
             SerializedObject serialized = new(movement);
             serialized.FindProperty("localOffset").vector3Value = offset;
             serialized.ApplyModifiedPropertiesWithoutUndo();
+            AddWarningStripes(block.transform, 3);
+            CreateWorldLabel(block.transform, "MOVING CRUSHER", new Vector3(0f, 1.3f, 0f), new Color(1f, 0.48f, 0.08f));
         }
 
         private static GameObject CreateBarrel(Transform parent, Vector3 position, string name)
@@ -81,13 +111,57 @@ namespace RunGame.EditorTools
             body.isKinematic = true;
             barrel.AddComponent<ExplosiveBarrel>();
 
-            GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            band.name = "Warning Band";
-            band.transform.SetParent(barrel.transform, false);
-            band.transform.localScale = new Vector3(1.02f, 0.22f, 1.02f);
-            Object.DestroyImmediate(band.GetComponent<Collider>());
-            band.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("WarningMaterial", new Color(1f, 0.64f, 0.02f), 0.15f);
+            for (int i = -1; i <= 1; i++)
+            {
+                GameObject band = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                band.name = "Warning Band";
+                band.transform.SetParent(barrel.transform, false);
+                band.transform.localPosition = new Vector3(0f, i * 0.62f, 0f);
+                band.transform.localScale = new Vector3(1.03f, 0.1f, 1.03f);
+                Object.DestroyImmediate(band.GetComponent<Collider>());
+                band.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("WarningMaterial", new Color(1f, 0.64f, 0.02f), 0.15f);
+            }
+            GameObject warningLight = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            warningLight.name = "Warning Light";
+            warningLight.transform.SetParent(barrel.transform, false);
+            warningLight.transform.localPosition = new Vector3(0f, 1.18f, 0f);
+            warningLight.transform.localScale = Vector3.one * 0.25f;
+            Object.DestroyImmediate(warningLight.GetComponent<Collider>());
+            warningLight.GetComponent<Renderer>().sharedMaterial = GetOrCreateEmissiveMaterial("BarrelWarningLightMaterial", new Color(1f, 0.06f, 0.01f));
+            CreateWorldLabel(barrel.transform, "EXPLOSIVE  •  IMPACT > 5.5", new Vector3(0f, 1.65f, 0f), new Color(1f, 0.7f, 0.12f));
             return barrel;
+        }
+
+        private static void AddWarningStripes(Transform parent, int count)
+        {
+            Material warning = GetOrCreateMaterial("WarningMaterial", new Color(1f, 0.64f, 0.02f), 0.15f);
+            for (int i = 0; i < count; i++)
+            {
+                GameObject stripe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                stripe.name = "Warning Stripe";
+                stripe.transform.SetParent(parent, false);
+                float x = count == 1 ? 0f : Mathf.Lerp(-0.42f, 0.42f, (float)i / (count - 1));
+                stripe.transform.localPosition = new Vector3(x, 0.51f, 0f);
+                stripe.transform.localScale = new Vector3(0.06f, 0.03f, 1.03f);
+                stripe.transform.localRotation = Quaternion.Euler(0f, 0f, 18f);
+                Object.DestroyImmediate(stripe.GetComponent<Collider>());
+                stripe.GetComponent<Renderer>().sharedMaterial = warning;
+            }
+        }
+
+        private static void CreateWorldLabel(Transform parent, string value, Vector3 localPosition, Color color)
+        {
+            GameObject labelObject = new("Hazard Label");
+            labelObject.transform.SetParent(parent, false);
+            labelObject.transform.localPosition = localPosition;
+            labelObject.transform.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            TextMesh text = labelObject.AddComponent<TextMesh>();
+            text.text = value;
+            text.anchor = TextAnchor.MiddleCenter;
+            text.alignment = TextAlignment.Center;
+            text.characterSize = 0.18f;
+            text.fontSize = 64;
+            text.color = color;
         }
 
         private static void CreateHealthHud(PlayerHealth health)
@@ -151,6 +225,15 @@ namespace RunGame.EditorTools
             material.SetFloat("_Metallic", metallic);
             material.SetFloat("_Smoothness", 0.55f);
             AssetDatabase.CreateAsset(material, path);
+            return material;
+        }
+
+        private static Material GetOrCreateEmissiveMaterial(string name, Color color)
+        {
+            Material material = GetOrCreateMaterial(name, color, 0.1f);
+            material.EnableKeyword("_EMISSION");
+            material.SetColor("_EmissionColor", color * 4f);
+            EditorUtility.SetDirty(material);
             return material;
         }
 

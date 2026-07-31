@@ -41,32 +41,35 @@ namespace RunGame.EditorTools
             if (previous != null) Object.DestroyImmediate(previous.gameObject);
             GameObject dust = new("Movement Dust");
             dust.transform.SetParent(player.transform, false);
-            dust.transform.localPosition = new Vector3(0f, -0.85f, -0.45f);
-            dust.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);
+            dust.transform.localPosition = new Vector3(0f, -0.9f, -0.48f);
             ParticleSystem particles = dust.AddComponent<ParticleSystem>();
             ParticleSystem.MainModule main = particles.main;
             main.duration = 1f;
             main.loop = true;
             main.playOnAwake = false;
-            main.startLifetime = new ParticleSystem.MinMaxCurve(0.35f, 0.7f);
-            main.startSpeed = new ParticleSystem.MinMaxCurve(0.7f, 1.8f);
-            main.startSize = new ParticleSystem.MinMaxCurve(0.15f, 0.48f);
-            main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.42f, 0.72f, 0.9f, 0.65f), new Color(0.8f, 0.9f, 1f, 0.2f));
+            main.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.9f);
+            main.startSpeed = new ParticleSystem.MinMaxCurve(0.15f, 0.65f);
+            main.startSize = new ParticleSystem.MinMaxCurve(0.24f, 0.72f);
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.48f, 0.43f, 0.36f, 0.62f), new Color(0.72f, 0.68f, 0.6f, 0.35f));
             main.simulationSpace = ParticleSystemSimulationSpace.World;
+            main.gravityModifier = 0.08f;
 
             ParticleSystem.EmissionModule emission = particles.emission;
-            emission.rateOverTime = 26f;
+            emission.rateOverTime = 0f;
             ParticleSystem.ShapeModule shape = particles.shape;
-            shape.shapeType = ParticleSystemShapeType.Cone;
-            shape.angle = 22f;
-            shape.radius = 0.32f;
+            shape.shapeType = ParticleSystemShapeType.Box;
+            shape.scale = new Vector3(0.75f, 0.08f, 0.5f);
             ParticleSystem.ColorOverLifetimeModule color = particles.colorOverLifetime;
             color.enabled = true;
             Gradient gradient = new();
             gradient.SetKeys(
-                new[] { new GradientColorKey(new Color(0.35f, 0.75f, 1f), 0f), new GradientColorKey(Color.white, 1f) },
-                new[] { new GradientAlphaKey(0.7f, 0f), new GradientAlphaKey(0f, 1f) });
+                new[] { new GradientColorKey(new Color(0.58f, 0.52f, 0.43f), 0f), new GradientColorKey(new Color(0.34f, 0.32f, 0.3f), 1f) },
+                new[] { new GradientAlphaKey(0.58f, 0f), new GradientAlphaKey(0.25f, 0.35f), new GradientAlphaKey(0f, 1f) });
             color.color = gradient;
+            ParticleSystem.NoiseModule noise = particles.noise;
+            noise.enabled = true;
+            noise.strength = 0.22f;
+            noise.frequency = 0.55f;
 
             ParticleSystemRenderer renderer = dust.GetComponent<ParticleSystemRenderer>();
             renderer.sharedMaterial = CreateParticleMaterial();
@@ -114,9 +117,14 @@ namespace RunGame.EditorTools
         {
             const string path = "Assets/Materials/MovementParticleMaterial.mat";
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (material != null) return material;
+            if (material != null)
+            {
+                material.color = new Color(0.62f, 0.57f, 0.49f, 0.52f);
+                EditorUtility.SetDirty(material);
+                return material;
+            }
             Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Particles/Standard Unlit");
-            material = new Material(shader) { color = new Color(0.45f, 0.8f, 1f, 0.55f) };
+            material = new Material(shader) { color = new Color(0.62f, 0.57f, 0.49f, 0.52f) };
             AssetDatabase.CreateAsset(material, path);
             return material;
         }

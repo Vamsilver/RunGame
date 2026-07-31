@@ -7,13 +7,19 @@ namespace RunGame.Effects
     public sealed class MovementParticleController : MonoBehaviour
     {
         [SerializeField] private PlayerController playerController;
+        [SerializeField, Min(0f)] private float minimumSpeed = 0.35f;
+        [SerializeField, Min(0f)] private float maximumEmissionRate = 42f;
         private ParticleSystem particles;
 
         private void Awake() => particles = GetComponent<ParticleSystem>();
 
         private void Update()
         {
-            if (playerController.IsMoving)
+            float speed = playerController.HorizontalVelocity.magnitude;
+            ParticleSystem.EmissionModule emission = particles.emission;
+            emission.rateOverTime = maximumEmissionRate * Mathf.InverseLerp(minimumSpeed, 7f, speed);
+
+            if (speed > minimumSpeed)
             {
                 if (!particles.isPlaying) particles.Play();
             }
