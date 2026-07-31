@@ -38,6 +38,10 @@ namespace RunGame.Player
 
         private void FixedUpdate()
         {
+            // Collisions may add torque around the Y axis. Rotation is controlled
+            // explicitly below, so physical angular velocity must not accumulate.
+            body.angularVelocity = Vector3.zero;
+
             Vector3 desiredVelocity = new(moveInput.x * moveSpeed, body.linearVelocity.y, moveInput.y * moveSpeed);
             body.linearVelocity = Vector3.MoveTowards(body.linearVelocity, desiredVelocity, acceleration * Time.fixedDeltaTime);
 
