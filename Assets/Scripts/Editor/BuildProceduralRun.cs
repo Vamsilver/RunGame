@@ -46,6 +46,14 @@ namespace RunGame.EditorTools
             EditorApplication.Exit(0);
         }
 
+        public static void BuildRollingBarrelOnlyFromCommandLine()
+        {
+            CreateRollingBarrelPrefab();
+            AssetDatabase.SaveAssets();
+            Debug.Log("Rolling barrel rebuilt from the static barrel visual prefab.");
+            EditorApplication.Exit(0);
+        }
+
         private static GameObject CreateCoinModule()
         {
             GameObject root = CreateModuleBase("Coin Module", "COIN RUN", new Color(0.12f, 0.7f, 0.95f));
@@ -221,18 +229,18 @@ namespace RunGame.EditorTools
 
         private static GameObject CreateRollingBarrelPrefab()
         {
-            GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            GameObject staticPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Obstacles/ExplosiveBarrel.prefab");
+            GameObject barrel = (GameObject)PrefabUtility.InstantiatePrefab(staticPrefab);
+            PrefabUtility.UnpackPrefabInstance(barrel, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             barrel.name = "Rolling Explosive Barrel";
             // A barrel moving across X needs its axle along Z, so rotate the
             // cylinder's default Y axis onto Z.
             barrel.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
-            barrel.transform.localScale = new Vector3(0.75f, 0.9f, 0.75f);
-            barrel.GetComponent<Renderer>().sharedMaterial = GetMaterial("BarrelMaterial");
-            Rigidbody body = barrel.AddComponent<Rigidbody>();
+            Rigidbody body = barrel.GetComponent<Rigidbody>();
+            body.isKinematic = false;
             body.mass = 2.8f;
             body.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
             body.interpolation = RigidbodyInterpolation.Interpolate;
-            barrel.AddComponent<ExplosiveBarrel>();
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(barrel, "Assets/Prefabs/Modules/RollingExplosiveBarrel.prefab");
             Object.DestroyImmediate(barrel);
             return prefab;
