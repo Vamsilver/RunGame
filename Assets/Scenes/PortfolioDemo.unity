@@ -7076,7 +7076,7 @@ MonoBehaviour:
     m_FontStyle: 1
     m_BestFit: 0
     m_MinSize: 10
-    m_MaxSize: 40
+    m_MaxSize: 52
     m_Alignment: 4
     m_AlignByGeometry: 0
     m_RichText: 1
@@ -8350,7 +8350,7 @@ ParticleSystem:
           m_PostInfinity: 2
           m_RotationOrder: 4
       cycleCount: 1
-      repeatInterval: 0.0001
+      repeatInterval: 0.01
       probability: 1
   SizeModule:
     enabled: 0
@@ -15130,7 +15130,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0.05, z: 34}
-  m_LocalScale: {x: 8, y: 0.1, z: 1.4}
+  m_LocalScale: {x: 22.5864, y: 0.1, z: 1.4}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1162111195}
