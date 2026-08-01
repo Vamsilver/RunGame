@@ -91,18 +91,20 @@ namespace RunGame.EditorTools
         private static GameObject CreateRollingBarrelModule(GameObject rollingBarrel)
         {
             GameObject root = CreateModuleBase("Rolling Barrels Module", "ROLLING BARREL FLOW", new Color(1f, 0.35f, 0.05f));
-            Material rampMaterial = GetMaterial("HazardDarkMaterial");
-            CreateRamp(root.transform, new Vector3(-4.3f, 1.25f, 0f), -13f, rampMaterial);
-            CreateRamp(root.transform, new Vector3(4.3f, 1.25f, 0f), 13f, rampMaterial);
+            Transform fullRail;
+            while ((fullRail = root.transform.Find("Safety Rail")) != null)
+                Object.DestroyImmediate(fullRail.gameObject);
+            CreateFlowRail(root.transform, -6f, new Color(1f, 0.35f, 0.05f));
+            CreateFlowRail(root.transform, 6f, new Color(1f, 0.35f, 0.05f));
 
             GameObject spawnerObject = new("Alternating Barrel Flow");
             spawnerObject.transform.SetParent(root.transform, false);
             Transform left = new GameObject("Left Spawn").transform;
             left.SetParent(spawnerObject.transform, false);
-            left.localPosition = new Vector3(-5.2f, 2.45f, 0f);
+            left.localPosition = new Vector3(-6.8f, 0.9f, -4f);
             Transform right = new GameObject("Right Spawn").transform;
             right.SetParent(spawnerObject.transform, false);
-            right.localPosition = new Vector3(5.2f, 2.45f, 0f);
+            right.localPosition = new Vector3(6.8f, 0.9f, 4f);
             BarrelFlowSpawner spawner = spawnerObject.AddComponent<BarrelFlowSpawner>();
             SerializedObject serialized = new(spawner);
             serialized.FindProperty("rollingBarrelPrefab").objectReferenceValue = rollingBarrel;
@@ -111,6 +113,25 @@ namespace RunGame.EditorTools
             serialized.ApplyModifiedPropertiesWithoutUndo();
             AddCoins(root.transform, new[] { new Vector3(0f, 1.1f, -6f), new Vector3(0f, 1.1f, 6f) });
             return SaveModule(root, "RollingBarrelsModule");
+        }
+
+        private static void CreateFlowRail(Transform root, float x, Color color)
+        {
+            // Openings around Z -4 and +4 let both parallel barrel lanes enter
+            // from one side and roll completely off the opposite side.
+            CreateRailSegment(root, x, -7.1f, 3.8f, color);
+            CreateRailSegment(root, x, 0f, 5.6f, color);
+            CreateRailSegment(root, x, 7.1f, 3.8f, color);
+        }
+
+        private static void CreateRailSegment(Transform root, float x, float z, float length, Color color)
+        {
+            GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            rail.name = "Safety Rail Segment";
+            rail.transform.SetParent(root, false);
+            rail.transform.localPosition = new Vector3(x, 0.4f, z);
+            rail.transform.localScale = new Vector3(0.25f, 0.8f, length);
+            rail.GetComponent<Renderer>().sharedMaterial = CreateMaterial($"ModuleAccent_{ColorUtility.ToHtmlStringRGB(color)}", color, true);
         }
 
         private static GameObject CreateMovingHazardModule()

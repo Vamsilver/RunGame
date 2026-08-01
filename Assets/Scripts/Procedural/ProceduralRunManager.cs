@@ -86,6 +86,7 @@ namespace RunGame.Procedural
                 GameObject module = Instantiate(prefab, new Vector3(0f, 0f, nextStart + length * 0.5f), Quaternion.identity, transform);
                 module.name = $"{i + 1:00} - {moduleAsset?.ModuleName ?? prefab.name}";
                 ApplyDifficulty(module);
+                CreateCityScenery(nextStart, length, i);
                 nextStart += length + moduleGap;
             }
 
@@ -118,6 +119,39 @@ namespace RunGame.Procedural
             bridge.transform.position = new Vector3(0f, -0.5f, (start + end) * 0.5f);
             bridge.transform.localScale = new Vector3(12f, 1f, end - start);
             bridge.GetComponent<Renderer>().sharedMaterial = bridgeMaterial;
+        }
+
+        private void CreateCityScenery(float start, float length, int moduleIndex)
+        {
+            System.Random random = new(unchecked(RunProgress.Seed + moduleIndex * 7919));
+            for (int side = -1; side <= 1; side += 2)
+            {
+                for (int row = 0; row < 3; row++)
+                {
+                    float width = 3.2f + (float)random.NextDouble() * 2.2f;
+                    float depth = 3.4f + (float)random.NextDouble() * 2.4f;
+                    float height = 4.5f + (float)random.NextDouble() * 7.5f;
+                    float z = start + 2.8f + row * (length - 5.6f) * 0.5f;
+                    float x = side * (9f + (float)random.NextDouble() * 3f);
+
+                    GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    building.name = $"City Building {moduleIndex + 1}-{side}-{row + 1}";
+                    building.transform.SetParent(transform);
+                    building.transform.position = new Vector3(x, height * 0.5f - 0.45f, z);
+                    building.transform.localScale = new Vector3(width, height, depth);
+                    Destroy(building.GetComponent<Collider>());
+                    Color facade = Color.HSVToRGB(0.52f + (float)random.NextDouble() * 0.12f, 0.22f, 0.28f + (float)random.NextDouble() * 0.2f);
+                    building.GetComponent<Renderer>().material.color = facade;
+
+                    GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    roof.name = "Roof";
+                    roof.transform.SetParent(building.transform, false);
+                    roof.transform.localPosition = new Vector3(0f, 0.54f, 0f);
+                    roof.transform.localScale = new Vector3(1.08f, 0.08f, 1.08f);
+                    Destroy(roof.GetComponent<Collider>());
+                    roof.GetComponent<Renderer>().material.color = new Color(0.08f, 0.1f, 0.14f);
+                }
+            }
         }
 
         public static List<int> GenerateModuleSequence(int seed, int count, int typeCount)

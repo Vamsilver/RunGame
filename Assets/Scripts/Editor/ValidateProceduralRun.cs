@@ -40,6 +40,10 @@ namespace RunGame.EditorTools
             Require(staticBarrel.transform.Find("Warning Light") == null, "Decorative barrel warning light must be removed");
             Require(rollingBarrel.transform.childCount == staticBarrel.transform.childCount, "Rolling and static barrels must share the same visual child structure");
             Require(rollingBarrel.GetComponent<Rigidbody>() != null && !rollingBarrel.GetComponent<Rigidbody>().isKinematic, "Rolling barrel must use dynamic physics");
+            GameObject flowModule = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/RollingBarrelsModule.prefab");
+            Transform flow = flowModule.transform.Find("Alternating Barrel Flow");
+            Require(flow != null && Mathf.Abs(flow.Find("Left Spawn").localPosition.z - flow.Find("Right Spawn").localPosition.z) >= 6f, "Barrel lanes must not intersect");
+            Require(Mathf.Abs(flow.Find("Left Spawn").localPosition.x) > 6f && Mathf.Abs(flow.Find("Right Spawn").localPosition.x) > 6f, "Barrels must spawn outside the rails and roll away");
             List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             List<int> repeated = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             Require(string.Join(",", first) == string.Join(",", repeated), "Seed is not reproducible");
