@@ -6,6 +6,9 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/ProceduralRun.unity
+    guid: 39daec9007d77314b88eda29ebf2dbc7
+  - enabled: 1
     path: Assets/Scenes/PortfolioDemo.unity
     guid: 8942037071bd5504c922125eacf23a03
   m_configObjects:
