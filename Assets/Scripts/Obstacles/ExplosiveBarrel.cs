@@ -24,6 +24,7 @@ namespace RunGame.Obstacles
             GameObject effect = new("Barrel Explosion");
             effect.transform.position = position;
             ParticleSystem particles = effect.AddComponent<ParticleSystem>();
+            particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             ParticleSystem.MainModule main = particles.main;
             main.duration = 0.6f;
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.28f, 0.72f);
