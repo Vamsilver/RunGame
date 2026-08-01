@@ -12,11 +12,25 @@ namespace RunGame.Player
 
         private Rigidbody body;
         private Vector2 moveInput;
+        private float baseMoveSpeed;
+        private float baseAcceleration;
 
         public Vector3 HorizontalVelocity => new(body.linearVelocity.x, 0f, body.linearVelocity.z);
         public bool IsMoving => HorizontalVelocity.sqrMagnitude > 0.1f;
 
-        private void Awake() => body = GetComponent<Rigidbody>();
+        private void Awake()
+        {
+            body = GetComponent<Rigidbody>();
+            baseMoveSpeed = moveSpeed;
+            baseAcceleration = acceleration;
+        }
+
+        public void SetDifficulty(float multiplier)
+        {
+            float speedMultiplier = Mathf.Sqrt(Mathf.Max(1f, multiplier));
+            moveSpeed = baseMoveSpeed * speedMultiplier;
+            acceleration = baseAcceleration * speedMultiplier;
+        }
 
         private void Update()
         {

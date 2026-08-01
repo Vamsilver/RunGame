@@ -32,12 +32,13 @@ namespace RunGame.EditorTools
                 CreateBonusModule(),
                 CreateRollingBarrelModule(rollingBarrel),
                 CreateMovingHazardModule(),
-                CreateStaticBarrelModule()
+                CreateStaticBarrelModule(),
+                CreateSpinnerModule()
             };
             GameObject finishPrefab = CreateFinishPrefab();
             CreateScene(modules, finishPrefab);
             AssetDatabase.SaveAssets();
-            Debug.Log("RunGame procedural run complete: five modules and runtime scene created.");
+            Debug.Log("RunGame procedural run complete: six modules and runtime scene created.");
         }
 
         public static void BuildFromCommandLine()
@@ -131,6 +132,46 @@ namespace RunGame.EditorTools
                 new Vector3(-2.8f, 1.1f, 3f), new Vector3(2.8f, 1.1f, 6f)
             });
             return SaveModule(root, "StaticBarrelsModule");
+        }
+
+        private static GameObject CreateSpinnerModule()
+        {
+            GameObject root = CreateModuleBase("Damage Spinner Module", "DAMAGE SPINNER", new Color(1f, 0.12f, 0.35f));
+            CreateDamageSpinner(root.transform, new Vector3(0f, 0.65f, 0f));
+            AddCoins(root.transform, new[]
+            {
+                new Vector3(-3.8f, 1.1f, -6f), new Vector3(3.8f, 1.1f, -3f),
+                new Vector3(-3.8f, 1.1f, 3f), new Vector3(3.8f, 1.1f, 6f)
+            });
+            return SaveModule(root, "DamageSpinnerModule");
+        }
+
+        private static void CreateDamageSpinner(Transform root, Vector3 position)
+        {
+            GameObject spinner = new("Damage Spinner");
+            spinner.transform.SetParent(root, false);
+            spinner.transform.localPosition = position;
+            Rigidbody body = spinner.AddComponent<Rigidbody>();
+            body.isKinematic = true;
+            body.interpolation = RigidbodyInterpolation.Interpolate;
+            spinner.AddComponent<RotatingObstacle>();
+
+            GameObject hub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+            hub.name = "Spinner Hub";
+            hub.transform.SetParent(spinner.transform, false);
+            hub.transform.localScale = new Vector3(0.7f, 0.45f, 0.7f);
+            hub.GetComponent<Renderer>().sharedMaterial = GetMaterial("HazardDarkMaterial");
+
+            for (int i = 0; i < 2; i++)
+            {
+                GameObject blade = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                blade.name = $"Damage Blade {i + 1}";
+                blade.transform.SetParent(spinner.transform, false);
+                blade.transform.localRotation = Quaternion.Euler(0f, i * 90f, 0f);
+                blade.transform.localScale = new Vector3(10f, 0.45f, 0.65f);
+                blade.GetComponent<Renderer>().sharedMaterial = GetMaterial("HazardMaterial");
+                blade.AddComponent<DamageObstacle>();
+            }
         }
 
         private static GameObject CreateModuleBase(string name, string label, Color accent)

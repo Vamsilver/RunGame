@@ -40,6 +40,7 @@ namespace RunGame.Procedural
             health = player.GetComponent<PlayerHealth>();
             wallet.SetCoins(RunProgress.Coins);
             health.Initialize(RunProgress.Health);
+            player.GetComponent<PlayerController>()?.SetDifficulty(Difficulty);
             health.Died += RestartAfterDeath;
             BuildRun();
             RefreshHud();

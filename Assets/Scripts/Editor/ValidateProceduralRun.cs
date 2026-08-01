@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using RunGame.Gameplay;
+using RunGame.Obstacles;
 using RunGame.Procedural;
 using Unity.Cinemachine;
 using UnityEditor;
@@ -21,12 +22,15 @@ namespace RunGame.EditorTools
             EditorSceneManager.OpenScene(ScenePath);
             Require(UnityEngine.Object.FindFirstObjectByType<ProceduralRunManager>() != null, "ProceduralRunManager missing");
             Require(UnityEngine.Object.FindFirstObjectByType<CinemachineCamera>() != null, "Cinemachine camera missing");
-            Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Modules" }).Length >= 7, "Module prefabs missing");
+            Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Modules" }).Length >= 8, "Module prefabs missing");
             GameObject finish = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/ProceduralFinish.prefab");
             Require(finish != null && finish.GetComponent<LevelFinishSequence>() != null, "Procedural finish missing");
-            string[] required = { "CoinModule", "BonusModule", "RollingBarrelsModule", "MovingHazardsModule", "StaticBarrelsModule" };
+            string[] required = { "CoinModule", "BonusModule", "RollingBarrelsModule", "MovingHazardsModule", "StaticBarrelsModule", "DamageSpinnerModule" };
             foreach (string name in required)
                 Require(AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Modules/{name}.prefab") != null, $"{name} missing");
+            GameObject spinner = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/DamageSpinnerModule.prefab");
+            Require(spinner.GetComponentInChildren<RotatingObstacle>(true) != null, "Damage spinner must rotate");
+            Require(spinner.GetComponentsInChildren<DamageObstacle>(true).Length >= 2, "Damage spinner blades must deal damage");
             GameObject rollingBarrel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/RollingExplosiveBarrel.prefab");
             Require(rollingBarrel != null, "Rolling barrel prefab missing");
             Vector3 axle = rollingBarrel.transform.rotation * Vector3.up;
@@ -35,13 +39,13 @@ namespace RunGame.EditorTools
             Require(staticBarrel != null, "Static barrel prefab missing");
             Require(rollingBarrel.transform.childCount == staticBarrel.transform.childCount, "Rolling and static barrels must share the same visual child structure");
             Require(rollingBarrel.GetComponent<Rigidbody>() != null && !rollingBarrel.GetComponent<Rigidbody>().isKinematic, "Rolling barrel must use dynamic physics");
-            List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 5);
-            List<int> repeated = ProceduralRunManager.GenerateModuleSequence(123456, 12, 5);
+            List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
+            List<int> repeated = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             Require(string.Join(",", first) == string.Join(",", repeated), "Seed is not reproducible");
-            Require(new HashSet<int>(first.GetRange(0, 5)).Count == 5, "First level does not include every base module");
+            Require(new HashSet<int>(first.GetRange(0, 6)).Count == 6, "Initial sequence does not include every module type");
             for (int i = 1; i < first.Count; i++)
                 Require(first[i] != first[i - 1], "Adjacent duplicate modules detected");
-            Debug.Log("Procedural Run validation passed: generator, five module types, finish, and Cinemachine are present.");
+            Debug.Log("Procedural Run validation passed: generator, six module types, finish, and Cinemachine are present.");
         }
 
         public static void ValidateFromCommandLine()
