@@ -1,9 +1,10 @@
 using UnityEngine;
+using RunGame.Procedural;
 
 namespace RunGame.Obstacles
 {
     [RequireComponent(typeof(Rigidbody))]
-    public sealed class OscillatingObstacle : MonoBehaviour
+    public sealed class OscillatingObstacle : MonoBehaviour, IDifficultyScalable
     {
         [SerializeField] private Vector3 localOffset = new(7f, 0f, 0f);
         [SerializeField, Min(0.1f)] private float cycleDuration = 2.5f;

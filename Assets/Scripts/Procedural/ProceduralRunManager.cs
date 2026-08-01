@@ -2,7 +2,6 @@ using System.Collections;
 using System.Collections.Generic;
 using RunGame.Collectibles;
 using RunGame.Gameplay;
-using RunGame.Obstacles;
 using RunGame.Persistence;
 using RunGame.Player;
 using UnityEngine;
@@ -82,22 +81,22 @@ namespace RunGame.Procedural
                 GameObject prefab = modulePrefabs[sequence[i]];
                 RunModule moduleAsset = prefab.GetComponent<RunModule>();
                 float length = moduleAsset != null ? moduleAsset.Length : 18f;
-                CreateBridge(nextStart - moduleGap, nextStart);
+                LevelGeometryBuilder.CreateRoad(transform, "Safe Connector", nextStart - moduleGap, nextStart, bridgeMaterial, true);
                 GameObject module = Instantiate(prefab, new Vector3(0f, 0f, nextStart + length * 0.5f), Quaternion.identity, transform);
                 module.name = $"{i + 1:00} - {moduleAsset?.ModuleName ?? prefab.name}";
                 ApplyDifficulty(module);
                 nextStart += length + moduleGap;
             }
 
-            CreateBridge(nextStart - moduleGap, nextStart);
+            LevelGeometryBuilder.CreateRoad(transform, "Safe Connector", nextStart - moduleGap, nextStart, bridgeMaterial, true);
             GameObject finish = Instantiate(finishPrefab, new Vector3(0f, 0f, nextStart + 1.5f), Quaternion.identity, transform);
             const float visualStart = -62f;
             float gameplayEnd = nextStart + 4f;
             float visualEnd = gameplayEnd + 105f;
-            CreateRoadExtension(visualStart, -8f);
-            CreateRoadExtension(gameplayEnd, visualEnd);
-            CreateContinuousCity(visualStart, visualEnd);
-            CreateInvisibleBoundary(-8f, gameplayEnd);
+            LevelGeometryBuilder.CreateRoad(transform, "Decorative Road To Horizon", visualStart, -8f, bridgeMaterial, false);
+            LevelGeometryBuilder.CreateRoad(transform, "Decorative Road To Horizon", gameplayEnd, visualEnd, bridgeMaterial, false);
+            CityEnvironmentGenerator.Generate(transform, RunProgress.Seed, visualStart, visualEnd);
+            LevelGeometryBuilder.CreatePlayerBoundary(transform, -8f, gameplayEnd);
             LevelFinishSequence sequenceController = finish.GetComponent<LevelFinishSequence>();
             if (sequenceController != null)
                 sequenceController.Configure(this, completionBanner, nextLevelButton, countdownText);
@@ -108,123 +107,8 @@ namespace RunGame.Procedural
 
         private void ApplyDifficulty(GameObject module)
         {
-            foreach (BarrelFlowSpawner spawner in module.GetComponentsInChildren<BarrelFlowSpawner>(true))
-                spawner.SetDifficulty(Difficulty);
-            foreach (OscillatingObstacle obstacle in module.GetComponentsInChildren<OscillatingObstacle>(true))
-                obstacle.SetDifficulty(Difficulty);
-            foreach (RotatingObstacle obstacle in module.GetComponentsInChildren<RotatingObstacle>(true))
-                obstacle.SetDifficulty(Difficulty);
-        }
-
-        private void CreateBridge(float start, float end)
-        {
-            if (end <= start) return;
-            GameObject bridge = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            bridge.name = "Safe Connector";
-            bridge.transform.SetParent(transform);
-            bridge.transform.position = new Vector3(0f, -0.5f, (start + end) * 0.5f);
-            bridge.transform.localScale = new Vector3(12f, 1f, end - start);
-            bridge.GetComponent<Renderer>().sharedMaterial = bridgeMaterial;
-        }
-
-        private void CreateRoadExtension(float start, float end)
-        {
-            if (end <= start) return;
-            GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            road.name = "Decorative Road To Horizon";
-            road.transform.SetParent(transform);
-            road.transform.position = new Vector3(0f, -0.5f, (start + end) * 0.5f);
-            road.transform.localScale = new Vector3(12f, 1f, end - start);
-            road.GetComponent<Renderer>().sharedMaterial = bridgeMaterial;
-            Destroy(road.GetComponent<Collider>());
-        }
-
-        private void CreateContinuousCity(float start, float end)
-        {
-            GameObject[] buildingPrefabs = Resources.LoadAll<GameObject>("CityBuildings");
-            if (buildingPrefabs.Length == 0) return;
-            GameObject treePrefab = Resources.Load<GameObject>("CityProps/CityTree");
-            GameObject carPrefab = Resources.Load<GameObject>("CityProps/CityCar");
-            System.Random random = new(RunProgress.Seed);
-            float length = end - start;
-            CreateScenerySurface("City Pavement", new Vector3(-10f, -0.62f, (start + end) * 0.5f), new Vector3(8f, 0.24f, length), new Color(0.2f, 0.22f, 0.27f));
-            CreateScenerySurface("City Pavement", new Vector3(10f, -0.62f, (start + end) * 0.5f), new Vector3(8f, 0.24f, length), new Color(0.2f, 0.22f, 0.27f));
-            CreateScenerySurface("Grass Background", new Vector3(-22f, -0.68f, (start + end) * 0.5f), new Vector3(16f, 0.18f, length), new Color(0.08f, 0.48f, 0.16f));
-            CreateScenerySurface("Grass Background", new Vector3(22f, -0.68f, (start + end) * 0.5f), new Vector3(16f, 0.18f, length), new Color(0.08f, 0.48f, 0.16f));
-
-            const float spacing = 7.2f;
-            int slotCount = Mathf.CeilToInt(length / spacing);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                for (int slot = 0; slot < slotCount; slot++)
-                {
-                    float z = start + 3.6f + slot * spacing;
-                    if (z > end - 2f) break;
-                    bool intersection = slot > 0 && slot % 5 == 0;
-                    if (intersection)
-                    {
-                        CreateScenerySurface("Side Intersection", new Vector3(side * 17f, -0.54f, z), new Vector3(22f, 0.28f, 4.8f), new Color(0.075f, 0.085f, 0.105f));
-                        if (carPrefab != null)
-                        {
-                            GameObject car = Instantiate(carPrefab, transform);
-                            car.name = "Intersection Car";
-                            car.transform.position = new Vector3(side * (12f + (float)random.NextDouble() * 7f), -0.48f, z);
-                            car.transform.rotation = Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
-                        }
-                        continue;
-                    }
-
-                    float width = 3.2f + (float)random.NextDouble() * 2.2f;
-                    float depth = 3.4f + (float)random.NextDouble() * 2.4f;
-                    float height = 4.5f + (float)random.NextDouble() * 7.5f;
-                    float x = side * (9f + (float)random.NextDouble() * 3f);
-
-                    GameObject prefab = buildingPrefabs[random.Next(buildingPrefabs.Length)];
-                    GameObject building = Instantiate(prefab, transform);
-                    building.name = $"City Building {side}-{slot + 1}";
-                    building.transform.position = new Vector3(x, -0.5f, z);
-                    building.transform.localScale = new Vector3(width / 4f, height / 6f, depth / 4f);
-
-                    if (treePrefab != null)
-                    {
-                        GameObject tree = Instantiate(treePrefab, transform);
-                        tree.name = "Background Tree";
-                        tree.transform.position = new Vector3(side * (15f + (float)random.NextDouble() * 4f), -0.5f, z + ((float)random.NextDouble() - 0.5f) * 3f);
-                        tree.transform.localScale = Vector3.one * (0.8f + (float)random.NextDouble() * 0.55f);
-                    }
-                }
-            }
-        }
-
-        private void CreateScenerySurface(string name, Vector3 position, Vector3 scale, Color color)
-        {
-            GameObject surface = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            surface.name = name;
-            surface.transform.SetParent(transform);
-            surface.transform.position = position;
-            surface.transform.localScale = scale;
-            Destroy(surface.GetComponent<Collider>());
-            surface.GetComponent<Renderer>().material.color = color;
-        }
-
-        private void CreateInvisibleBoundary(float start, float end)
-        {
-            float length = end - start;
-            CreateBoundaryWall("Left Invisible Wall", new Vector3(-6.25f, 3.5f, (start + end) * 0.5f), new Vector3(0.3f, 8f, length));
-            CreateBoundaryWall("Right Invisible Wall", new Vector3(6.25f, 3.5f, (start + end) * 0.5f), new Vector3(0.3f, 8f, length));
-            CreateBoundaryWall("Start Invisible Wall", new Vector3(0f, 3.5f, start), new Vector3(12.8f, 8f, 0.3f));
-            CreateBoundaryWall("Finish Invisible Wall", new Vector3(0f, 3.5f, end), new Vector3(12.8f, 8f, 0.3f));
-        }
-
-        private void CreateBoundaryWall(string name, Vector3 position, Vector3 scale)
-        {
-            GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            wall.name = name;
-            wall.transform.SetParent(transform);
-            wall.transform.position = position;
-            wall.transform.localScale = scale;
-            wall.GetComponent<Renderer>().enabled = false;
-            wall.AddComponent<PlayerBoundary>();
+            foreach (MonoBehaviour behaviour in module.GetComponentsInChildren<MonoBehaviour>(true))
+                if (behaviour is IDifficultyScalable scalable) scalable.SetDifficulty(Difficulty);
         }
 
         public static List<int> GenerateModuleSequence(int seed, int count, int typeCount)

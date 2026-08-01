@@ -1,9 +1,10 @@
 using UnityEngine;
+using RunGame.Procedural;
 
 namespace RunGame.Obstacles
 {
     [RequireComponent(typeof(Rigidbody))]
-    public sealed class RotatingObstacle : MonoBehaviour
+    public sealed class RotatingObstacle : MonoBehaviour, IDifficultyScalable
     {
         [SerializeField] private Vector3 axis = Vector3.up;
         [SerializeField] private float degreesPerSecond = 105f;

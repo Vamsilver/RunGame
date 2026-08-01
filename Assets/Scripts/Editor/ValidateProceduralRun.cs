@@ -73,6 +73,9 @@ namespace RunGame.EditorTools
             Require(Mathf.Abs(flow.Find("Left Spawn").localPosition.x) > 6f && Mathf.Abs(flow.Find("Right Spawn").localPosition.x) > 6f, "Barrels must spawn outside the rails and roll away");
             Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Resources/CityBuildings" }).Length >= 3, "Colorful city building prefabs missing");
             Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Resources/CityProps" }).Length >= 2, "City tree and car prefabs missing");
+            Require(typeof(IDifficultyScalable).IsAssignableFrom(typeof(BarrelFlowSpawner)), "Barrel flow must use the shared difficulty contract");
+            Require(typeof(IDifficultyScalable).IsAssignableFrom(typeof(OscillatingObstacle)), "Moving obstacles must use the shared difficulty contract");
+            Require(typeof(IDifficultyScalable).IsAssignableFrom(typeof(RotatingObstacle)), "Rotating obstacles must use the shared difficulty contract");
             List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             List<int> repeated = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             Require(string.Join(",", first) == string.Join(",", repeated), "Seed is not reproducible");

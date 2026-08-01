@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace RunGame.Procedural
 {
-    public sealed class BarrelFlowSpawner : MonoBehaviour
+    public sealed class BarrelFlowSpawner : MonoBehaviour, IDifficultyScalable
     {
         [SerializeField] private GameObject rollingBarrelPrefab;
         [SerializeField] private Transform leftSpawn;
