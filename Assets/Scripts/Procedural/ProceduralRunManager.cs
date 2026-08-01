@@ -91,8 +91,13 @@ namespace RunGame.Procedural
 
             CreateBridge(nextStart - moduleGap, nextStart);
             GameObject finish = Instantiate(finishPrefab, new Vector3(0f, 0f, nextStart + 1.5f), Quaternion.identity, transform);
-            CreateContinuousCity(-8f, nextStart + 4f);
-            CreateInvisibleBoundary(-8f, nextStart + 4f);
+            const float visualStart = -62f;
+            float gameplayEnd = nextStart + 4f;
+            float visualEnd = gameplayEnd + 105f;
+            CreateRoadExtension(visualStart, -8f);
+            CreateRoadExtension(gameplayEnd, visualEnd);
+            CreateContinuousCity(visualStart, visualEnd);
+            CreateInvisibleBoundary(-8f, gameplayEnd);
             LevelFinishSequence sequenceController = finish.GetComponent<LevelFinishSequence>();
             if (sequenceController != null)
                 sequenceController.Configure(this, completionBanner, nextLevelButton, countdownText);
@@ -120,6 +125,18 @@ namespace RunGame.Procedural
             bridge.transform.position = new Vector3(0f, -0.5f, (start + end) * 0.5f);
             bridge.transform.localScale = new Vector3(12f, 1f, end - start);
             bridge.GetComponent<Renderer>().sharedMaterial = bridgeMaterial;
+        }
+
+        private void CreateRoadExtension(float start, float end)
+        {
+            if (end <= start) return;
+            GameObject road = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            road.name = "Decorative Road To Horizon";
+            road.transform.SetParent(transform);
+            road.transform.position = new Vector3(0f, -0.5f, (start + end) * 0.5f);
+            road.transform.localScale = new Vector3(12f, 1f, end - start);
+            road.GetComponent<Renderer>().sharedMaterial = bridgeMaterial;
+            Destroy(road.GetComponent<Collider>());
         }
 
         private void CreateContinuousCity(float start, float end)

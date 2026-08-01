@@ -77,6 +77,18 @@ namespace RunGame.EditorTools
             EditorApplication.Exit(0);
         }
 
+        public static void BuildLevelEndpointsFromCommandLine()
+        {
+            const string finishPath = "Assets/Prefabs/Modules/ProceduralFinish.prefab";
+            GameObject finish = PrefabUtility.LoadPrefabContents(finishPath);
+            AddFinishChecker(finish);
+            PrefabUtility.SaveAsPrefabAsset(finish, finishPath);
+            PrefabUtility.UnloadPrefabContents(finish);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Checkered finish prefab and horizon endpoint visuals rebuilt.");
+            EditorApplication.Exit(0);
+        }
+
         private static GameObject CreateCoinModule()
         {
             GameObject root = CreateModuleBase("Coin Module", "COIN RUN", new Color(0.12f, 0.7f, 0.95f));
@@ -513,9 +525,38 @@ namespace RunGame.EditorTools
             particles.GetComponent<ParticleSystemRenderer>().sharedMaterial = GetMaterial("ConfettiMaterial");
             particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
             SetReference(sequence, "celebrationParticles", particles);
+            AddFinishChecker(finish);
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(finish, "Assets/Prefabs/Modules/ProceduralFinish.prefab");
             Object.DestroyImmediate(finish);
             return prefab;
+        }
+
+        private static void AddFinishChecker(GameObject finish)
+        {
+            for (int i = finish.transform.childCount - 1; i >= 0; i--)
+            {
+                Transform child = finish.transform.GetChild(i);
+                if (child.name.StartsWith("Checker Tile")) Object.DestroyImmediate(child.gameObject);
+            }
+
+            Material black = CreateMaterial("FinishCheckerBlack", new Color(0.015f, 0.018f, 0.025f), false);
+            Material white = CreateMaterial("FinishCheckerWhite", new Color(0.96f, 0.96f, 0.96f), false);
+            finish.GetComponent<Renderer>().sharedMaterial = black;
+            const int columns = 10;
+            const int rows = 2;
+            for (int row = 0; row < rows; row++)
+            {
+                for (int column = 0; column < columns; column++)
+                {
+                    GameObject tile = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    tile.name = $"Checker Tile {row + 1}-{column + 1}";
+                    tile.transform.SetParent(finish.transform, false);
+                    tile.transform.localPosition = new Vector3(-0.45f + column * 0.1f, 0.56f, -0.25f + row * 0.5f);
+                    tile.transform.localScale = new Vector3(0.1f, 0.08f, 0.5f);
+                    tile.GetComponent<Renderer>().sharedMaterial = (row + column) % 2 == 0 ? white : black;
+                    Object.DestroyImmediate(tile.GetComponent<Collider>());
+                }
+            }
         }
 
         private static void CreateScene(GameObject[] modules, GameObject finishPrefab)

@@ -55,7 +55,7 @@ namespace RunGame.EditorTools
             if (previous != null) Object.DestroyImmediate(previous.gameObject);
             GameObject dust = new("Movement Dust");
             dust.transform.SetParent(player.transform, false);
-            dust.transform.localPosition = new Vector3(0f, -0.9f, -0.48f);
+            dust.transform.localPosition = new Vector3(0f, -0.62f, -0.48f);
             ParticleSystem particles = dust.AddComponent<ParticleSystem>();
             ParticleSystem.MainModule main = particles.main;
             main.duration = 1f;
@@ -84,6 +84,10 @@ namespace RunGame.EditorTools
             noise.enabled = true;
             noise.strength = 0.22f;
             noise.frequency = 0.55f;
+            ParticleSystem.VelocityOverLifetimeModule velocity = particles.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.World;
+            velocity.y = new ParticleSystem.MinMaxCurve(0.65f, 1.35f);
 
             ParticleSystemRenderer renderer = dust.GetComponent<ParticleSystemRenderer>();
             renderer.sharedMaterial = CreateParticleMaterial();

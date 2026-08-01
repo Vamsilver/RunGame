@@ -29,6 +29,8 @@ namespace RunGame.EditorTools
             ParticleSystemRenderer movementRenderer = movementParticles.GetComponent<ParticleSystemRenderer>();
             Require(movementRenderer != null && movementRenderer.sharedMaterial.shader.name == "RunGame/Round Particle", "Player movement particles must use the round particle shader");
             ParticleSystem movementSystem = movementParticles.GetComponent<ParticleSystem>();
+            Require(movementParticles.transform.localPosition.y > -0.7f, "Movement dust emitter is buried in the road");
+            Require(movementSystem.velocityOverLifetime.enabled && movementSystem.velocityOverLifetime.y.constantMax >= 1f, "Movement dust must rise upward");
             Gradient movementGradient = movementSystem.colorOverLifetime.color.gradient;
             Color particleStart = movementGradient.Evaluate(0f);
             Color particleEnd = movementGradient.Evaluate(1f);
@@ -37,6 +39,10 @@ namespace RunGame.EditorTools
             Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Modules" }).Length >= 8, "Module prefabs missing");
             GameObject finish = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/ProceduralFinish.prefab");
             Require(finish != null && finish.GetComponent<LevelFinishSequence>() != null, "Procedural finish missing");
+            int checkerTiles = 0;
+            foreach (Transform child in finish.transform)
+                if (child.name.StartsWith("Checker Tile")) checkerTiles++;
+            Require(checkerTiles == 20, "Finish must contain a 10 by 2 black-and-white checker stripe");
             string[] required = { "CoinModule", "BonusModule", "RollingBarrelsModule", "MovingHazardsModule", "StaticBarrelsModule", "DamageSpinnerModule" };
             foreach (string name in required)
             {
