@@ -50,11 +50,6 @@ namespace RunGame.Obstacles
             size.size = new ParticleSystem.MinMaxCurve(1f, AnimationCurve.EaseInOut(0f, 0.25f, 1f, 1.35f));
             Material fireMaterial = Resources.Load<Material>("Effects/FireParticleMaterial");
             if (fireMaterial != null) effect.GetComponent<ParticleSystemRenderer>().sharedMaterial = fireMaterial;
-            Light flash = effect.AddComponent<Light>();
-            flash.type = LightType.Point;
-            flash.color = new Color(1f, 0.32f, 0.025f);
-            flash.intensity = 7f;
-            flash.range = 7f;
             particles.Play();
             Destroy(effect, 1.3f);
         }

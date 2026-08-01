@@ -87,7 +87,9 @@ namespace RunGame.EditorTools
             ParticleSystem.VelocityOverLifetimeModule velocity = particles.velocityOverLifetime;
             velocity.enabled = true;
             velocity.space = ParticleSystemSimulationSpace.World;
+            velocity.x = new ParticleSystem.MinMaxCurve(0f, 0f);
             velocity.y = new ParticleSystem.MinMaxCurve(0.65f, 1.35f);
+            velocity.z = new ParticleSystem.MinMaxCurve(0f, 0f);
 
             ParticleSystemRenderer renderer = dust.GetComponent<ParticleSystemRenderer>();
             renderer.sharedMaterial = CreateParticleMaterial();

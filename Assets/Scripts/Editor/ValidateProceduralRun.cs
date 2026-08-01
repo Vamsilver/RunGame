@@ -34,6 +34,7 @@ namespace RunGame.EditorTools
             ParticleSystem movementSystem = movementParticles.GetComponent<ParticleSystem>();
             Require(movementParticles.transform.localPosition.y > -0.7f, "Movement dust emitter is buried in the road");
             Require(movementSystem.velocityOverLifetime.enabled && movementSystem.velocityOverLifetime.y.constantMax >= 1f, "Movement dust must rise upward");
+            Require(movementSystem.velocityOverLifetime.x.mode == movementSystem.velocityOverLifetime.y.mode && movementSystem.velocityOverLifetime.z.mode == movementSystem.velocityOverLifetime.y.mode, "Movement particle velocity curves must use the same mode");
             Gradient movementGradient = movementSystem.colorOverLifetime.color.gradient;
             Color particleStart = movementGradient.Evaluate(0f);
             Color particleEnd = movementGradient.Evaluate(1f);
@@ -69,6 +70,8 @@ namespace RunGame.EditorTools
             ParticleSystem healEffect = new SerializedObject(bonusTrigger).FindProperty("activationParticles").objectReferenceValue as ParticleSystem;
             Require(healEffect != null && healEffect.GetComponent<ParticleSystemRenderer>().sharedMaterial.shader.name == "RunGame/Plus Particle", "Healing effect must use rising green plus particles");
             Require(healEffect.velocityOverLifetime.enabled && healEffect.velocityOverLifetime.y.constantMax >= 2f, "Healing plus particles must rise upward");
+            Require(!healEffect.main.loop && healEffect.emission.burstCount > 0, "Healing plus particles must be a one-shot burst");
+            Require(healEffect.velocityOverLifetime.x.mode == healEffect.velocityOverLifetime.y.mode && healEffect.velocityOverLifetime.z.mode == healEffect.velocityOverLifetime.y.mode, "Healing particle velocity curves must use the same mode");
             Color healEnd = healEffect.colorOverLifetime.color.gradient.Evaluate(1f);
             Require(healEnd.a <= 0.01f, "Healing plus particles must dissolve");
             GameObject rollingBarrel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/RollingExplosiveBarrel.prefab");

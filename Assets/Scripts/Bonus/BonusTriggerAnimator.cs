@@ -23,12 +23,15 @@ namespace RunGame.Bonus
         {
             if (!other.CompareTag("Player")) return;
             bonusAnimator.SetBool(PlayerNearby, true);
-            if (activationParticles != null) activationParticles.Play();
             if (activationLight != null) activationLight.enabled = true;
             if (!consumed)
             {
-                consumed = true;
-                other.GetComponent<RunGame.Player.PlayerHealth>()?.Heal(healAmount);
+                int healed = other.GetComponent<RunGame.Player.PlayerHealth>()?.Heal(healAmount) ?? 0;
+                if (healed > 0)
+                {
+                    consumed = true;
+                    if (activationParticles != null) activationParticles.Play();
+                }
             }
         }
 
