@@ -1,9 +1,11 @@
 #if UNITY_EDITOR
 using System;
 using System.Collections.Generic;
+using RunGame.Bonus;
 using RunGame.Gameplay;
 using RunGame.Effects;
 using RunGame.Obstacles;
+using RunGame.Player;
 using RunGame.Procedural;
 using Unity.Cinemachine;
 using UnityEditor;
@@ -37,6 +39,10 @@ namespace RunGame.EditorTools
             Color particleEnd = movementGradient.Evaluate(1f);
             Require(particleStart.r > 0.9f && particleStart.g > 0.9f && particleStart.b > 0.9f, "Movement particles must start white");
             Require(particleEnd.a <= 0.01f && particleEnd.r < 0.65f, "Movement particles must fade to transparent gray");
+            ParticleSystem damageEffect = playerPrefab.transform.Find("Damage Hit Effect")?.GetComponent<ParticleSystem>();
+            Require(damageEffect != null && damageEffect.GetComponent<ParticleSystemRenderer>().sharedMaterial.shader.name == "RunGame/Round Particle", "Player damage particle effect missing");
+            Material fireMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Resources/Effects/FireParticleMaterial.mat");
+            Require(fireMaterial != null && fireMaterial.shader.name == "RunGame/Round Particle", "Barrel fire explosion material missing");
             Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Modules" }).Length >= 8, "Module prefabs missing");
             GameObject finish = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/ProceduralFinish.prefab");
             Require(finish != null && finish.GetComponent<LevelFinishSequence>() != null, "Procedural finish missing");
@@ -58,6 +64,13 @@ namespace RunGame.EditorTools
             GameObject spinner = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/DamageSpinnerModule.prefab");
             Require(spinner.GetComponentInChildren<RotatingObstacle>(true) != null, "Damage spinner must rotate");
             Require(spinner.GetComponentInChildren<DamageObstacle>(true) != null, "Damage spinner Rigidbody root must deal damage");
+            GameObject bonusPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Bonuses/AnimatedBonus.prefab");
+            BonusTriggerAnimator bonusTrigger = bonusPrefab.GetComponentInChildren<BonusTriggerAnimator>(true);
+            ParticleSystem healEffect = new SerializedObject(bonusTrigger).FindProperty("activationParticles").objectReferenceValue as ParticleSystem;
+            Require(healEffect != null && healEffect.GetComponent<ParticleSystemRenderer>().sharedMaterial.shader.name == "RunGame/Plus Particle", "Healing effect must use rising green plus particles");
+            Require(healEffect.velocityOverLifetime.enabled && healEffect.velocityOverLifetime.y.constantMax >= 2f, "Healing plus particles must rise upward");
+            Color healEnd = healEffect.colorOverLifetime.color.gradient.Evaluate(1f);
+            Require(healEnd.a <= 0.01f, "Healing plus particles must dissolve");
             GameObject rollingBarrel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/RollingExplosiveBarrel.prefab");
             Require(rollingBarrel != null, "Rolling barrel prefab missing");
             Vector3 axle = rollingBarrel.transform.rotation * Vector3.up;

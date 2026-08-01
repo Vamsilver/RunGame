@@ -8,6 +8,7 @@ namespace RunGame.Player
     {
         [SerializeField, Min(1)] private int maxHealth = 100;
         [SerializeField, Min(0f)] private float damageCooldown = 0.65f;
+        [SerializeField] private ParticleSystem damageParticles;
 
         private bool canTakeDamage = true;
         private Renderer playerRenderer;
@@ -20,6 +21,8 @@ namespace RunGame.Player
         private void Awake()
         {
             CurrentHealth = maxHealth;
+            if (damageParticles == null)
+                damageParticles = transform.Find("Damage Hit Effect")?.GetComponent<ParticleSystem>();
             playerRenderer = GetComponent<Renderer>();
             if (playerRenderer != null) normalColor = playerRenderer.material.color;
         }
@@ -47,6 +50,7 @@ namespace RunGame.Player
             CurrentHealth = Mathf.Max(0, CurrentHealth - damage);
             HealthChanged?.Invoke(CurrentHealth, maxHealth);
             if (playerRenderer != null) StartCoroutine(DamageFlash());
+            if (damageParticles != null) damageParticles.Play(true);
             if (CurrentHealth == 0) Die();
             else StartCoroutine(DamageCooldown());
         }
