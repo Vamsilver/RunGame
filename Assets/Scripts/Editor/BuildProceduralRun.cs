@@ -25,6 +25,7 @@ namespace RunGame.EditorTools
         public static void Build()
         {
             EnsureFolder("Assets/Prefabs/Modules");
+            CreateCityBuildingPrefabs();
             GameObject rollingBarrel = CreateRollingBarrelPrefab();
             GameObject[] modules =
             {
@@ -66,6 +67,15 @@ namespace RunGame.EditorTools
             EditorApplication.Exit(0);
         }
 
+        public static void BuildCityEnvironmentFromCommandLine()
+        {
+            CreateCityBuildingPrefabs();
+            RemoveRailsFromModulePrefabs();
+            AssetDatabase.SaveAssets();
+            Debug.Log("City environment prefabs created and visible module rails removed.");
+            EditorApplication.Exit(0);
+        }
+
         private static GameObject CreateCoinModule()
         {
             GameObject root = CreateModuleBase("Coin Module", "COIN RUN", new Color(0.12f, 0.7f, 0.95f));
@@ -94,8 +104,6 @@ namespace RunGame.EditorTools
             Transform fullRail;
             while ((fullRail = root.transform.Find("Safety Rail")) != null)
                 Object.DestroyImmediate(fullRail.gameObject);
-            CreateFlowRail(root.transform, -6f, new Color(1f, 0.35f, 0.05f));
-            CreateFlowRail(root.transform, 6f, new Color(1f, 0.35f, 0.05f));
 
             GameObject spawnerObject = new("Alternating Barrel Flow");
             spawnerObject.transform.SetParent(root.transform, false);
@@ -231,10 +239,73 @@ namespace RunGame.EditorTools
             ground.transform.localPosition = new Vector3(0f, -0.5f, 0f);
             ground.transform.localScale = new Vector3(12f, 1f, ModuleLength);
             ground.GetComponent<Renderer>().sharedMaterial = GetMaterial("GroundMaterial");
-            CreateRail(root.transform, -6f, accent);
-            CreateRail(root.transform, 6f, accent);
             CreateLabel(root.transform, label, accent);
             return root;
+        }
+
+        private static void CreateCityBuildingPrefabs()
+        {
+            EnsureFolder("Assets/Resources/CityBuildings");
+            CreateCityBuildingPrefab("CityHouseCoral", new Color(0.88f, 0.28f, 0.3f), new Color(0.2f, 0.08f, 0.16f), new Color(1f, 0.82f, 0.28f));
+            CreateCityBuildingPrefab("CityHouseBlue", new Color(0.15f, 0.55f, 0.92f), new Color(0.08f, 0.16f, 0.3f), new Color(0.35f, 0.95f, 1f));
+            CreateCityBuildingPrefab("CityHouseMint", new Color(0.18f, 0.78f, 0.5f), new Color(0.08f, 0.24f, 0.18f), new Color(1f, 0.58f, 0.2f));
+        }
+
+        private static void CreateCityBuildingPrefab(string name, Color facade, Color roofColor, Color windowColor)
+        {
+            GameObject root = new(name);
+            Material facadeMaterial = CreateMaterial($"{name}_Facade", facade, false);
+            Material roofMaterial = CreateMaterial($"{name}_Roof", roofColor, false);
+            Material windowMaterial = CreateMaterial($"{name}_Window", windowColor, true);
+
+            CreateBuildingPart(root.transform, "Foundation", new Vector3(0f, 0.15f, 0f), new Vector3(4.5f, 0.3f, 4.5f), Quaternion.identity, roofMaterial);
+            CreateBuildingPart(root.transform, "Facade", new Vector3(0f, 3.15f, 0f), new Vector3(4f, 6f, 4f), Quaternion.identity, facadeMaterial);
+            CreateBuildingPart(root.transform, "Roof Left", new Vector3(-1.15f, 6.7f, 0f), new Vector3(3f, 0.3f, 4.5f), Quaternion.Euler(0f, 0f, 32f), roofMaterial);
+            CreateBuildingPart(root.transform, "Roof Right", new Vector3(1.15f, 6.7f, 0f), new Vector3(3f, 0.3f, 4.5f), Quaternion.Euler(0f, 0f, -32f), roofMaterial);
+
+            for (int floor = 0; floor < 2; floor++)
+            {
+                float y = 2.1f + floor * 2.2f;
+                for (int column = -1; column <= 1; column += 2)
+                {
+                    CreateBuildingPart(root.transform, "Front Window", new Vector3(column * 1.05f, y, -2.03f), new Vector3(0.85f, 1.05f, 0.08f), Quaternion.identity, windowMaterial);
+                    CreateBuildingPart(root.transform, "Back Window", new Vector3(column * 1.05f, y, 2.03f), new Vector3(0.85f, 1.05f, 0.08f), Quaternion.identity, windowMaterial);
+                    CreateBuildingPart(root.transform, "Side Window", new Vector3(-2.03f, y, column * 1.05f), new Vector3(0.08f, 1.05f, 0.85f), Quaternion.identity, windowMaterial);
+                    CreateBuildingPart(root.transform, "Side Window", new Vector3(2.03f, y, column * 1.05f), new Vector3(0.08f, 1.05f, 0.85f), Quaternion.identity, windowMaterial);
+                }
+            }
+
+            PrefabUtility.SaveAsPrefabAsset(root, $"Assets/Resources/CityBuildings/{name}.prefab");
+            Object.DestroyImmediate(root);
+        }
+
+        private static void CreateBuildingPart(Transform root, string name, Vector3 position, Vector3 scale, Quaternion rotation, Material material)
+        {
+            GameObject part = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            part.name = name;
+            part.transform.SetParent(root, false);
+            part.transform.localPosition = position;
+            part.transform.localRotation = rotation;
+            part.transform.localScale = scale;
+            part.GetComponent<Renderer>().sharedMaterial = material;
+            Object.DestroyImmediate(part.GetComponent<Collider>());
+        }
+
+        private static void RemoveRailsFromModulePrefabs()
+        {
+            string[] moduleNames = { "CoinModule", "BonusModule", "RollingBarrelsModule", "MovingHazardsModule", "StaticBarrelsModule", "DamageSpinnerModule" };
+            foreach (string moduleName in moduleNames)
+            {
+                string path = $"Assets/Prefabs/Modules/{moduleName}.prefab";
+                GameObject contents = PrefabUtility.LoadPrefabContents(path);
+                for (int i = contents.transform.childCount - 1; i >= 0; i--)
+                {
+                    Transform child = contents.transform.GetChild(i);
+                    if (child.name.StartsWith("Safety Rail")) Object.DestroyImmediate(child.gameObject);
+                }
+                PrefabUtility.SaveAsPrefabAsset(contents, path);
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
         }
 
         private static void CreateRail(Transform root, float x, Color color)

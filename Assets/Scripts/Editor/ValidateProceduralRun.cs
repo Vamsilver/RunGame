@@ -27,7 +27,12 @@ namespace RunGame.EditorTools
             Require(finish != null && finish.GetComponent<LevelFinishSequence>() != null, "Procedural finish missing");
             string[] required = { "CoinModule", "BonusModule", "RollingBarrelsModule", "MovingHazardsModule", "StaticBarrelsModule", "DamageSpinnerModule" };
             foreach (string name in required)
-                Require(AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Modules/{name}.prefab") != null, $"{name} missing");
+            {
+                GameObject modulePrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Modules/{name}.prefab");
+                Require(modulePrefab != null, $"{name} missing");
+                foreach (Transform child in modulePrefab.transform)
+                    Require(!child.name.StartsWith("Safety Rail"), $"{name} still contains a visible safety rail");
+            }
             GameObject spinner = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/DamageSpinnerModule.prefab");
             Require(spinner.GetComponentInChildren<RotatingObstacle>(true) != null, "Damage spinner must rotate");
             Require(spinner.GetComponentInChildren<DamageObstacle>(true) != null, "Damage spinner Rigidbody root must deal damage");
@@ -44,6 +49,7 @@ namespace RunGame.EditorTools
             Transform flow = flowModule.transform.Find("Alternating Barrel Flow");
             Require(flow != null && Mathf.Abs(flow.Find("Left Spawn").localPosition.z - flow.Find("Right Spawn").localPosition.z) >= 6f, "Barrel lanes must not intersect");
             Require(Mathf.Abs(flow.Find("Left Spawn").localPosition.x) > 6f && Mathf.Abs(flow.Find("Right Spawn").localPosition.x) > 6f, "Barrels must spawn outside the rails and roll away");
+            Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Resources/CityBuildings" }).Length >= 3, "Colorful city building prefabs missing");
             List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             List<int> repeated = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             Require(string.Join(",", first) == string.Join(",", repeated), "Seed is not reproducible");

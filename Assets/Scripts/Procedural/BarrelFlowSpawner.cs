@@ -36,6 +36,12 @@ namespace RunGame.Procedural
             // changes the orientation saved on the asset root.
             Quaternion spawnRotation = point.rotation * Quaternion.Euler(90f, 0f, 0f);
             GameObject barrel = Instantiate(rollingBarrelPrefab, point.position, spawnRotation, transform);
+            Collider barrelCollider = barrel.GetComponent<Collider>();
+            if (barrelCollider != null)
+            {
+                foreach (PlayerBoundary boundary in FindObjectsByType<PlayerBoundary>())
+                    Physics.IgnoreCollision(barrelCollider, boundary.GetComponent<Collider>());
+            }
             Rigidbody body = barrel.GetComponent<Rigidbody>();
             if (body != null)
             {

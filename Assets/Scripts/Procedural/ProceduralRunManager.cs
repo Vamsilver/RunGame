@@ -92,6 +92,7 @@ namespace RunGame.Procedural
 
             CreateBridge(nextStart - moduleGap, nextStart);
             GameObject finish = Instantiate(finishPrefab, new Vector3(0f, 0f, nextStart + 1.5f), Quaternion.identity, transform);
+            CreateInvisibleBoundary(-8f, nextStart + 4f);
             LevelFinishSequence sequenceController = finish.GetComponent<LevelFinishSequence>();
             if (sequenceController != null)
                 sequenceController.Configure(this, completionBanner, nextLevelButton, countdownText);
@@ -123,7 +124,10 @@ namespace RunGame.Procedural
 
         private void CreateCityScenery(float start, float length, int moduleIndex)
         {
+            GameObject[] buildingPrefabs = Resources.LoadAll<GameObject>("CityBuildings");
+            if (buildingPrefabs.Length == 0) return;
             System.Random random = new(unchecked(RunProgress.Seed + moduleIndex * 7919));
+            CreateCityFloor(start, length);
             for (int side = -1; side <= 1; side += 2)
             {
                 for (int row = 0; row < 3; row++)
@@ -134,24 +138,48 @@ namespace RunGame.Procedural
                     float z = start + 2.8f + row * (length - 5.6f) * 0.5f;
                     float x = side * (9f + (float)random.NextDouble() * 3f);
 
-                    GameObject building = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                    GameObject prefab = buildingPrefabs[random.Next(buildingPrefabs.Length)];
+                    GameObject building = Instantiate(prefab, transform);
                     building.name = $"City Building {moduleIndex + 1}-{side}-{row + 1}";
                     building.transform.SetParent(transform);
-                    building.transform.position = new Vector3(x, height * 0.5f - 0.45f, z);
-                    building.transform.localScale = new Vector3(width, height, depth);
-                    Destroy(building.GetComponent<Collider>());
-                    Color facade = Color.HSVToRGB(0.52f + (float)random.NextDouble() * 0.12f, 0.22f, 0.28f + (float)random.NextDouble() * 0.2f);
-                    building.GetComponent<Renderer>().material.color = facade;
-
-                    GameObject roof = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                    roof.name = "Roof";
-                    roof.transform.SetParent(building.transform, false);
-                    roof.transform.localPosition = new Vector3(0f, 0.54f, 0f);
-                    roof.transform.localScale = new Vector3(1.08f, 0.08f, 1.08f);
-                    Destroy(roof.GetComponent<Collider>());
-                    roof.GetComponent<Renderer>().material.color = new Color(0.08f, 0.1f, 0.14f);
+                    building.transform.position = new Vector3(x, -0.5f, z);
+                    building.transform.localScale = new Vector3(width / 4f, height / 6f, depth / 4f);
                 }
             }
+        }
+
+        private void CreateCityFloor(float start, float length)
+        {
+            for (int side = -1; side <= 1; side += 2)
+            {
+                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
+                floor.name = "City Floor";
+                floor.transform.SetParent(transform);
+                floor.transform.position = new Vector3(side * 10f, -0.62f, start + length * 0.5f);
+                floor.transform.localScale = new Vector3(8f, 0.24f, length);
+                Destroy(floor.GetComponent<Collider>());
+                floor.GetComponent<Renderer>().material.color = new Color(0.18f, 0.2f, 0.24f);
+            }
+        }
+
+        private void CreateInvisibleBoundary(float start, float end)
+        {
+            float length = end - start;
+            CreateBoundaryWall("Left Invisible Wall", new Vector3(-6.25f, 3.5f, (start + end) * 0.5f), new Vector3(0.3f, 8f, length));
+            CreateBoundaryWall("Right Invisible Wall", new Vector3(6.25f, 3.5f, (start + end) * 0.5f), new Vector3(0.3f, 8f, length));
+            CreateBoundaryWall("Start Invisible Wall", new Vector3(0f, 3.5f, start), new Vector3(12.8f, 8f, 0.3f));
+            CreateBoundaryWall("Finish Invisible Wall", new Vector3(0f, 3.5f, end), new Vector3(12.8f, 8f, 0.3f));
+        }
+
+        private void CreateBoundaryWall(string name, Vector3 position, Vector3 scale)
+        {
+            GameObject wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            wall.name = name;
+            wall.transform.SetParent(transform);
+            wall.transform.position = position;
+            wall.transform.localScale = scale;
+            wall.GetComponent<Renderer>().enabled = false;
+            wall.AddComponent<PlayerBoundary>();
         }
 
         public static List<int> GenerateModuleSequence(int seed, int count, int typeCount)
