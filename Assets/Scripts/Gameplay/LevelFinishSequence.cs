@@ -1,7 +1,9 @@
 using System.Collections;
 using RunGame.Player;
+using RunGame.Procedural;
 using Unity.Cinemachine;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace RunGame.Gameplay
 {
@@ -12,8 +14,20 @@ namespace RunGame.Gameplay
         [SerializeField] private Vector3 celebrationCameraOffset = new(0f, 3.2f, -4.4f);
         [SerializeField] private GameObject completionBanner;
         [SerializeField] private ParticleSystem celebrationParticles;
+        [SerializeField, Min(1f)] private float automaticContinueDelay = 30f;
 
         private bool completed;
+        private ProceduralRunManager runManager;
+        private Button nextLevelButton;
+        private Text countdownText;
+
+        public void Configure(ProceduralRunManager manager, GameObject banner, Button button, Text countdown)
+        {
+            runManager = manager;
+            completionBanner = banner;
+            nextLevelButton = button;
+            countdownText = countdown;
+        }
 
         private void OnTriggerEnter(Collider other)
         {
@@ -36,6 +50,13 @@ namespace RunGame.Gameplay
 
             if (completionBanner != null) completionBanner.SetActive(true);
             if (celebrationParticles != null) celebrationParticles.Play();
+            if (nextLevelButton != null)
+            {
+                nextLevelButton.onClick.RemoveAllListeners();
+                nextLevelButton.onClick.AddListener(ContinueToNextLevel);
+                nextLevelButton.interactable = true;
+            }
+            if (runManager != null) StartCoroutine(AutomaticContinue());
 
             Transform cameraTransform = Camera.main != null ? Camera.main.transform : null;
             Vector3 lookDirection = cameraTransform != null
@@ -73,6 +94,27 @@ namespace RunGame.Gameplay
                 player.transform.localScale = danceScale + new Vector3(bounce * 0.08f, -bounce * 0.08f, bounce * 0.08f);
                 yield return null;
             }
+        }
+
+        private IEnumerator AutomaticContinue()
+        {
+            float remaining = automaticContinueDelay;
+            while (remaining > 0f && completed)
+            {
+                if (countdownText != null)
+                    countdownText.text = $"Next level starts in {Mathf.CeilToInt(remaining)}";
+                remaining -= Time.deltaTime;
+                yield return null;
+            }
+            ContinueToNextLevel();
+        }
+
+        private void ContinueToNextLevel()
+        {
+            if (!completed || runManager == null) return;
+            completed = false;
+            if (nextLevelButton != null) nextLevelButton.interactable = false;
+            runManager.CompleteLevel();
         }
     }
 }

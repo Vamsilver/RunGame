@@ -15,6 +15,7 @@ namespace RunGame.Player
         public int CurrentHealth { get; private set; }
         public int MaxHealth => maxHealth;
         public event Action<int, int> HealthChanged;
+        public event Action Died;
 
         private void Awake()
         {
@@ -24,6 +25,21 @@ namespace RunGame.Player
         }
 
         private void Start() => HealthChanged?.Invoke(CurrentHealth, maxHealth);
+
+        public void Initialize(int health)
+        {
+            CurrentHealth = Mathf.Clamp(health, 1, maxHealth);
+            HealthChanged?.Invoke(CurrentHealth, maxHealth);
+        }
+
+        public int Heal(int amount)
+        {
+            if (amount <= 0 || CurrentHealth <= 0) return 0;
+            int previous = CurrentHealth;
+            CurrentHealth = Mathf.Min(maxHealth, CurrentHealth + amount);
+            HealthChanged?.Invoke(CurrentHealth, maxHealth);
+            return CurrentHealth - previous;
+        }
 
         public void TakeDamage(int damage)
         {
@@ -60,6 +76,7 @@ namespace RunGame.Player
         private void Die()
         {
             Debug.Log("Player destroyed: health reached zero.");
+            Died?.Invoke();
             Destroy(gameObject);
         }
     }

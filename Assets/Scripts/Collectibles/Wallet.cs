@@ -10,6 +10,12 @@ namespace RunGame.Collectibles
         public int Coins => coins;
         public event Action<int> CoinsChanged;
 
+        public void SetCoins(int amount)
+        {
+            coins = Mathf.Max(0, amount);
+            CoinsChanged?.Invoke(coins);
+        }
+
         public void AddCoins(int amount)
         {
             if (amount <= 0) return;

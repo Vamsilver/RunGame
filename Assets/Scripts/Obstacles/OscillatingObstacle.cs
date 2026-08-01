@@ -9,12 +9,16 @@ namespace RunGame.Obstacles
         [SerializeField, Min(0.1f)] private float cycleDuration = 2.5f;
         private Rigidbody body;
         private Vector3 startPosition;
+        private float initialCycleDuration;
 
         private void Awake()
         {
             body = GetComponent<Rigidbody>();
             startPosition = transform.position;
+            initialCycleDuration = cycleDuration;
         }
+
+        public void SetDifficulty(float multiplier) => cycleDuration = initialCycleDuration / Mathf.Sqrt(Mathf.Max(1f, multiplier));
 
         private void FixedUpdate()
         {
