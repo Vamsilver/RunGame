@@ -32,13 +32,15 @@ namespace RunGame.Procedural
         private void Spawn(Transform point)
         {
             if (rollingBarrelPrefab == null || point == null) return;
-            GameObject barrel = Instantiate(rollingBarrelPrefab, point.position, point.rotation, transform);
+            Quaternion spawnRotation = point.rotation * rollingBarrelPrefab.transform.rotation;
+            GameObject barrel = Instantiate(rollingBarrelPrefab, point.position, spawnRotation, transform);
             Rigidbody body = barrel.GetComponent<Rigidbody>();
             if (body != null)
             {
                 Vector3 towardCenter = new(-Mathf.Sign(point.localPosition.x), 0f, 0f);
                 body.linearVelocity = towardCenter * barrelSpeed * Mathf.Sqrt(difficulty);
                 body.angularVelocity = Vector3.forward * -towardCenter.x * barrelSpeed;
+                body.maxAngularVelocity = 30f;
             }
             Destroy(barrel, barrelLifetime);
         }

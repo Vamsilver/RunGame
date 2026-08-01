@@ -223,7 +223,9 @@ namespace RunGame.EditorTools
         {
             GameObject barrel = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             barrel.name = "Rolling Explosive Barrel";
-            barrel.transform.rotation = Quaternion.Euler(0f, 0f, 90f);
+            // A barrel moving across X needs its axle along Z, so rotate the
+            // cylinder's default Y axis onto Z.
+            barrel.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
             barrel.transform.localScale = new Vector3(0.75f, 0.9f, 0.75f);
             barrel.GetComponent<Renderer>().sharedMaterial = GetMaterial("BarrelMaterial");
             Rigidbody body = barrel.AddComponent<Rigidbody>();
