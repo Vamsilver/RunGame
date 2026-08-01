@@ -20,6 +20,7 @@ namespace RunGame.EditorTools
         [MenuItem("RunGame/Validate Procedural Run")]
         public static void Validate()
         {
+            Require(EditorBuildSettings.scenes.Length > 0 && EditorBuildSettings.scenes[0].enabled && EditorBuildSettings.scenes[0].path == ScenePath, "ProceduralRun must be the first enabled build scene");
             EditorSceneManager.OpenScene(ScenePath);
             Require(UnityEngine.Object.FindFirstObjectByType<ProceduralRunManager>() != null, "ProceduralRunManager missing");
             Require(UnityEngine.Object.FindFirstObjectByType<CinemachineCamera>() != null, "Cinemachine camera missing");
