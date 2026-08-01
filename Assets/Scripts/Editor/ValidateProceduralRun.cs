@@ -32,6 +32,9 @@ namespace RunGame.EditorTools
                 Require(modulePrefab != null, $"{name} missing");
                 foreach (Transform child in modulePrefab.transform)
                     Require(!child.name.StartsWith("Safety Rail"), $"{name} still contains a visible safety rail");
+                TextMesh label = modulePrefab.transform.Find("Module Label")?.GetComponent<TextMesh>();
+                Require(label != null && label.characterSize <= 0.11f, $"{name} label is wider than the module");
+                Require(label.GetComponent<MeshRenderer>().sharedMaterial.shader.name == "RunGame/World Text Depth", $"{name} label is visible through geometry");
             }
             GameObject spinner = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/DamageSpinnerModule.prefab");
             Require(spinner.GetComponentInChildren<RotatingObstacle>(true) != null, "Damage spinner must rotate");
@@ -50,6 +53,7 @@ namespace RunGame.EditorTools
             Require(flow != null && Mathf.Abs(flow.Find("Left Spawn").localPosition.z - flow.Find("Right Spawn").localPosition.z) >= 6f, "Barrel lanes must not intersect");
             Require(Mathf.Abs(flow.Find("Left Spawn").localPosition.x) > 6f && Mathf.Abs(flow.Find("Right Spawn").localPosition.x) > 6f, "Barrels must spawn outside the rails and roll away");
             Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Resources/CityBuildings" }).Length >= 3, "Colorful city building prefabs missing");
+            Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Resources/CityProps" }).Length >= 2, "City tree and car prefabs missing");
             List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             List<int> repeated = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
             Require(string.Join(",", first) == string.Join(",", repeated), "Seed is not reproducible");

@@ -71,6 +71,7 @@ namespace RunGame.EditorTools
         {
             CreateCityBuildingPrefabs();
             RemoveRailsFromModulePrefabs();
+            UpdateModuleLabels();
             AssetDatabase.SaveAssets();
             Debug.Log("City environment prefabs created and visible module rails removed.");
             EditorApplication.Exit(0);
@@ -246,9 +247,49 @@ namespace RunGame.EditorTools
         private static void CreateCityBuildingPrefabs()
         {
             EnsureFolder("Assets/Resources/CityBuildings");
+            EnsureFolder("Assets/Resources/CityProps");
             CreateCityBuildingPrefab("CityHouseCoral", new Color(0.88f, 0.28f, 0.3f), new Color(0.2f, 0.08f, 0.16f), new Color(1f, 0.82f, 0.28f));
             CreateCityBuildingPrefab("CityHouseBlue", new Color(0.15f, 0.55f, 0.92f), new Color(0.08f, 0.16f, 0.3f), new Color(0.35f, 0.95f, 1f));
             CreateCityBuildingPrefab("CityHouseMint", new Color(0.18f, 0.78f, 0.5f), new Color(0.08f, 0.24f, 0.18f), new Color(1f, 0.58f, 0.2f));
+            CreateTreePrefab();
+            CreateCarPrefab();
+        }
+
+        private static void CreateTreePrefab()
+        {
+            GameObject root = new("City Tree");
+            CreateBuildingPart(root.transform, "Trunk", new Vector3(0f, 1.2f, 0f), new Vector3(0.55f, 2.4f, 0.55f), Quaternion.identity, CreateMaterial("CityTree_Trunk", new Color(0.35f, 0.16f, 0.07f), false));
+            Material leaves = CreateMaterial("CityTree_Leaves", new Color(0.12f, 0.72f, 0.22f), false);
+            CreateSpherePart(root.transform, "Crown", new Vector3(0f, 3.15f, 0f), new Vector3(2.4f, 2.6f, 2.4f), leaves);
+            CreateSpherePart(root.transform, "Crown", new Vector3(-0.8f, 2.8f, 0.2f), new Vector3(1.5f, 1.7f, 1.5f), leaves);
+            CreateSpherePart(root.transform, "Crown", new Vector3(0.75f, 2.9f, -0.15f), new Vector3(1.6f, 1.8f, 1.6f), leaves);
+            PrefabUtility.SaveAsPrefabAsset(root, "Assets/Resources/CityProps/CityTree.prefab");
+            Object.DestroyImmediate(root);
+        }
+
+        private static void CreateCarPrefab()
+        {
+            GameObject root = new("City Car");
+            Material body = CreateMaterial("CityCar_Body", new Color(1f, 0.2f, 0.08f), true);
+            Material dark = CreateMaterial("CityCar_Dark", new Color(0.035f, 0.045f, 0.06f), false);
+            CreateBuildingPart(root.transform, "Car Body", new Vector3(0f, 0.65f, 0f), new Vector3(2.1f, 0.65f, 4f), Quaternion.identity, body);
+            CreateBuildingPart(root.transform, "Cabin", new Vector3(0f, 1.2f, -0.25f), new Vector3(1.7f, 0.65f, 2f), Quaternion.identity, dark);
+            for (int x = -1; x <= 1; x += 2)
+                for (int z = -1; z <= 1; z += 2)
+                    CreateSpherePart(root.transform, "Wheel", new Vector3(x * 1.05f, 0.38f, z * 1.25f), new Vector3(0.38f, 0.38f, 0.38f), dark);
+            PrefabUtility.SaveAsPrefabAsset(root, "Assets/Resources/CityProps/CityCar.prefab");
+            Object.DestroyImmediate(root);
+        }
+
+        private static void CreateSpherePart(Transform root, string name, Vector3 position, Vector3 scale, Material material)
+        {
+            GameObject part = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+            part.name = name;
+            part.transform.SetParent(root, false);
+            part.transform.localPosition = position;
+            part.transform.localScale = scale;
+            part.GetComponent<Renderer>().sharedMaterial = material;
+            Object.DestroyImmediate(part.GetComponent<Collider>());
         }
 
         private static void CreateCityBuildingPrefab(string name, Color facade, Color roofColor, Color windowColor)
@@ -308,6 +349,34 @@ namespace RunGame.EditorTools
             }
         }
 
+        private static void UpdateModuleLabels()
+        {
+            Shader depthShader = Shader.Find("RunGame/World Text Depth");
+            if (depthShader == null) return;
+            Material depthMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/WorldTextDepth.mat");
+            if (depthMaterial == null)
+            {
+                Font font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+                depthMaterial = new Material(depthShader) { mainTexture = font.material.mainTexture };
+                AssetDatabase.CreateAsset(depthMaterial, "Assets/Materials/WorldTextDepth.mat");
+            }
+
+            string[] moduleNames = { "CoinModule", "BonusModule", "RollingBarrelsModule", "MovingHazardsModule", "StaticBarrelsModule", "DamageSpinnerModule" };
+            foreach (string moduleName in moduleNames)
+            {
+                string path = $"Assets/Prefabs/Modules/{moduleName}.prefab";
+                GameObject contents = PrefabUtility.LoadPrefabContents(path);
+                TextMesh label = contents.transform.Find("Module Label")?.GetComponent<TextMesh>();
+                if (label != null)
+                {
+                    label.characterSize = 0.105f;
+                    label.GetComponent<MeshRenderer>().sharedMaterial = depthMaterial;
+                }
+                PrefabUtility.SaveAsPrefabAsset(contents, path);
+                PrefabUtility.UnloadPrefabContents(contents);
+            }
+        }
+
         private static void CreateRail(Transform root, float x, Color color)
         {
             GameObject rail = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -329,8 +398,20 @@ namespace RunGame.EditorTools
             text.anchor = TextAnchor.MiddleCenter;
             text.alignment = TextAlignment.Center;
             text.fontSize = 58;
-            text.characterSize = 0.18f;
+            text.characterSize = 0.105f;
             text.color = color;
+            Shader depthShader = Shader.Find("RunGame/World Text Depth");
+            if (depthShader != null)
+            {
+                Material depthMaterial = AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/WorldTextDepth.mat");
+                if (depthMaterial == null)
+                {
+                    depthMaterial = new Material(depthShader);
+                    depthMaterial.mainTexture = text.font.material.mainTexture;
+                    AssetDatabase.CreateAsset(depthMaterial, "Assets/Materials/WorldTextDepth.mat");
+                }
+                label.GetComponent<MeshRenderer>().sharedMaterial = depthMaterial;
+            }
         }
 
         private static void CreateRamp(Transform root, Vector3 position, float zAngle, Material material)

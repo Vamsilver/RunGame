@@ -109,7 +109,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 2100000, guid: 179bbc5584970b44ca36b18230c016f7, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -143,7 +143,7 @@ TextMesh:
   m_GameObject: {fileID: 3296233343372233727}
   m_Text: ROLLING BARREL FLOW
   m_OffsetZ: 0
-  m_CharacterSize: 0.18
+  m_CharacterSize: 0.105
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1

@@ -86,12 +86,12 @@ namespace RunGame.Procedural
                 GameObject module = Instantiate(prefab, new Vector3(0f, 0f, nextStart + length * 0.5f), Quaternion.identity, transform);
                 module.name = $"{i + 1:00} - {moduleAsset?.ModuleName ?? prefab.name}";
                 ApplyDifficulty(module);
-                CreateCityScenery(nextStart, length, i);
                 nextStart += length + moduleGap;
             }
 
             CreateBridge(nextStart - moduleGap, nextStart);
             GameObject finish = Instantiate(finishPrefab, new Vector3(0f, 0f, nextStart + 1.5f), Quaternion.identity, transform);
+            CreateContinuousCity(-8f, nextStart + 4f);
             CreateInvisibleBoundary(-8f, nextStart + 4f);
             LevelFinishSequence sequenceController = finish.GetComponent<LevelFinishSequence>();
             if (sequenceController != null)
@@ -122,44 +122,72 @@ namespace RunGame.Procedural
             bridge.GetComponent<Renderer>().sharedMaterial = bridgeMaterial;
         }
 
-        private void CreateCityScenery(float start, float length, int moduleIndex)
+        private void CreateContinuousCity(float start, float end)
         {
             GameObject[] buildingPrefabs = Resources.LoadAll<GameObject>("CityBuildings");
             if (buildingPrefabs.Length == 0) return;
-            System.Random random = new(unchecked(RunProgress.Seed + moduleIndex * 7919));
-            CreateCityFloor(start, length);
+            GameObject treePrefab = Resources.Load<GameObject>("CityProps/CityTree");
+            GameObject carPrefab = Resources.Load<GameObject>("CityProps/CityCar");
+            System.Random random = new(RunProgress.Seed);
+            float length = end - start;
+            CreateScenerySurface("City Pavement", new Vector3(-10f, -0.62f, (start + end) * 0.5f), new Vector3(8f, 0.24f, length), new Color(0.2f, 0.22f, 0.27f));
+            CreateScenerySurface("City Pavement", new Vector3(10f, -0.62f, (start + end) * 0.5f), new Vector3(8f, 0.24f, length), new Color(0.2f, 0.22f, 0.27f));
+            CreateScenerySurface("Grass Background", new Vector3(-22f, -0.68f, (start + end) * 0.5f), new Vector3(16f, 0.18f, length), new Color(0.08f, 0.48f, 0.16f));
+            CreateScenerySurface("Grass Background", new Vector3(22f, -0.68f, (start + end) * 0.5f), new Vector3(16f, 0.18f, length), new Color(0.08f, 0.48f, 0.16f));
+
+            const float spacing = 7.2f;
+            int slotCount = Mathf.CeilToInt(length / spacing);
             for (int side = -1; side <= 1; side += 2)
             {
-                for (int row = 0; row < 3; row++)
+                for (int slot = 0; slot < slotCount; slot++)
                 {
+                    float z = start + 3.6f + slot * spacing;
+                    if (z > end - 2f) break;
+                    bool intersection = slot > 0 && slot % 5 == 0;
+                    if (intersection)
+                    {
+                        CreateScenerySurface("Side Intersection", new Vector3(side * 17f, -0.54f, z), new Vector3(22f, 0.28f, 4.8f), new Color(0.075f, 0.085f, 0.105f));
+                        if (carPrefab != null)
+                        {
+                            GameObject car = Instantiate(carPrefab, transform);
+                            car.name = "Intersection Car";
+                            car.transform.position = new Vector3(side * (12f + (float)random.NextDouble() * 7f), -0.48f, z);
+                            car.transform.rotation = Quaternion.Euler(0f, side < 0 ? 90f : -90f, 0f);
+                        }
+                        continue;
+                    }
+
                     float width = 3.2f + (float)random.NextDouble() * 2.2f;
                     float depth = 3.4f + (float)random.NextDouble() * 2.4f;
                     float height = 4.5f + (float)random.NextDouble() * 7.5f;
-                    float z = start + 2.8f + row * (length - 5.6f) * 0.5f;
                     float x = side * (9f + (float)random.NextDouble() * 3f);
 
                     GameObject prefab = buildingPrefabs[random.Next(buildingPrefabs.Length)];
                     GameObject building = Instantiate(prefab, transform);
-                    building.name = $"City Building {moduleIndex + 1}-{side}-{row + 1}";
-                    building.transform.SetParent(transform);
+                    building.name = $"City Building {side}-{slot + 1}";
                     building.transform.position = new Vector3(x, -0.5f, z);
                     building.transform.localScale = new Vector3(width / 4f, height / 6f, depth / 4f);
+
+                    if (treePrefab != null)
+                    {
+                        GameObject tree = Instantiate(treePrefab, transform);
+                        tree.name = "Background Tree";
+                        tree.transform.position = new Vector3(side * (15f + (float)random.NextDouble() * 4f), -0.5f, z + ((float)random.NextDouble() - 0.5f) * 3f);
+                        tree.transform.localScale = Vector3.one * (0.8f + (float)random.NextDouble() * 0.55f);
+                    }
                 }
             }
         }
 
-        private void CreateCityFloor(float start, float length)
+        private void CreateScenerySurface(string name, Vector3 position, Vector3 scale, Color color)
         {
-            for (int side = -1; side <= 1; side += 2)
-            {
-                GameObject floor = GameObject.CreatePrimitive(PrimitiveType.Cube);
-                floor.name = "City Floor";
-                floor.transform.SetParent(transform);
-                floor.transform.position = new Vector3(side * 10f, -0.62f, start + length * 0.5f);
-                floor.transform.localScale = new Vector3(8f, 0.24f, length);
-                Destroy(floor.GetComponent<Collider>());
-                floor.GetComponent<Renderer>().material.color = new Color(0.18f, 0.2f, 0.24f);
-            }
+            GameObject surface = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            surface.name = name;
+            surface.transform.SetParent(transform);
+            surface.transform.position = position;
+            surface.transform.localScale = scale;
+            Destroy(surface.GetComponent<Collider>());
+            surface.GetComponent<Renderer>().material.color = color;
         }
 
         private void CreateInvisibleBoundary(float start, float end)
