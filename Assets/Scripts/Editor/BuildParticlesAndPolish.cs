@@ -37,6 +37,18 @@ namespace RunGame.EditorTools
             EditorApplication.Exit(0);
         }
 
+        public static void BuildPlayerMovementParticlesFromCommandLine()
+        {
+            const string playerPath = "Assets/Prefabs/Player/Player.prefab";
+            GameObject player = PrefabUtility.LoadPrefabContents(playerPath);
+            CreateMovementParticles(player);
+            PrefabUtility.SaveAsPrefabAsset(player, playerPath);
+            PrefabUtility.UnloadPrefabContents(player);
+            AssetDatabase.SaveAssets();
+            Debug.Log("Round fading movement particles added to Player prefab.");
+            EditorApplication.Exit(0);
+        }
+
         private static void CreateMovementParticles(GameObject player)
         {
             Transform previous = player.transform.Find("Movement Dust");
@@ -52,7 +64,7 @@ namespace RunGame.EditorTools
             main.startLifetime = new ParticleSystem.MinMaxCurve(0.45f, 0.9f);
             main.startSpeed = new ParticleSystem.MinMaxCurve(0.15f, 0.65f);
             main.startSize = new ParticleSystem.MinMaxCurve(0.24f, 0.72f);
-            main.startColor = new ParticleSystem.MinMaxGradient(new Color(0.48f, 0.43f, 0.36f, 0.62f), new Color(0.72f, 0.68f, 0.6f, 0.35f));
+            main.startColor = new ParticleSystem.MinMaxGradient(new Color(1f, 1f, 1f, 0.88f), new Color(0.9f, 0.9f, 0.9f, 0.72f));
             main.simulationSpace = ParticleSystemSimulationSpace.World;
             main.gravityModifier = 0.08f;
 
@@ -65,8 +77,8 @@ namespace RunGame.EditorTools
             color.enabled = true;
             Gradient gradient = new();
             gradient.SetKeys(
-                new[] { new GradientColorKey(new Color(0.58f, 0.52f, 0.43f), 0f), new GradientColorKey(new Color(0.34f, 0.32f, 0.3f), 1f) },
-                new[] { new GradientAlphaKey(0.58f, 0f), new GradientAlphaKey(0.25f, 0.35f), new GradientAlphaKey(0f, 1f) });
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(new Color(0.52f, 0.52f, 0.52f), 1f) },
+                new[] { new GradientAlphaKey(0.86f, 0f), new GradientAlphaKey(0.42f, 0.55f), new GradientAlphaKey(0f, 1f) });
             color.color = gradient;
             ParticleSystem.NoiseModule noise = particles.noise;
             noise.enabled = true;
@@ -192,12 +204,14 @@ namespace RunGame.EditorTools
             Material material = AssetDatabase.LoadAssetAtPath<Material>(path);
             if (material != null)
             {
-                material.color = new Color(0.62f, 0.57f, 0.49f, 0.52f);
+                Shader roundShader = Shader.Find("RunGame/Round Particle");
+                if (roundShader != null) material.shader = roundShader;
+                material.color = Color.white;
                 EditorUtility.SetDirty(material);
                 return material;
             }
-            Shader shader = Shader.Find("Universal Render Pipeline/Particles/Unlit") ?? Shader.Find("Particles/Standard Unlit");
-            material = new Material(shader) { color = new Color(0.62f, 0.57f, 0.49f, 0.52f) };
+            Shader shader = Shader.Find("RunGame/Round Particle") ?? Shader.Find("Universal Render Pipeline/Particles/Unlit");
+            material = new Material(shader) { color = Color.white };
             AssetDatabase.CreateAsset(material, path);
             return material;
         }

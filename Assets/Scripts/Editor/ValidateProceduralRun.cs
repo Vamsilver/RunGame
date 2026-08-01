@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using RunGame.Gameplay;
+using RunGame.Effects;
 using RunGame.Obstacles;
 using RunGame.Procedural;
 using Unity.Cinemachine;
@@ -22,6 +23,17 @@ namespace RunGame.EditorTools
             EditorSceneManager.OpenScene(ScenePath);
             Require(UnityEngine.Object.FindFirstObjectByType<ProceduralRunManager>() != null, "ProceduralRunManager missing");
             Require(UnityEngine.Object.FindFirstObjectByType<CinemachineCamera>() != null, "Cinemachine camera missing");
+            GameObject playerPrefab = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Player/Player.prefab");
+            MovementParticleController movementParticles = playerPrefab.GetComponentInChildren<MovementParticleController>(true);
+            Require(movementParticles != null, "Player prefab movement particles missing");
+            ParticleSystemRenderer movementRenderer = movementParticles.GetComponent<ParticleSystemRenderer>();
+            Require(movementRenderer != null && movementRenderer.sharedMaterial.shader.name == "RunGame/Round Particle", "Player movement particles must use the round particle shader");
+            ParticleSystem movementSystem = movementParticles.GetComponent<ParticleSystem>();
+            Gradient movementGradient = movementSystem.colorOverLifetime.color.gradient;
+            Color particleStart = movementGradient.Evaluate(0f);
+            Color particleEnd = movementGradient.Evaluate(1f);
+            Require(particleStart.r > 0.9f && particleStart.g > 0.9f && particleStart.b > 0.9f, "Movement particles must start white");
+            Require(particleEnd.a <= 0.01f && particleEnd.r < 0.65f, "Movement particles must fade to transparent gray");
             Require(AssetDatabase.FindAssets("t:Prefab", new[] { "Assets/Prefabs/Modules" }).Length >= 8, "Module prefabs missing");
             GameObject finish = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/ProceduralFinish.prefab");
             Require(finish != null && finish.GetComponent<LevelFinishSequence>() != null, "Procedural finish missing");
