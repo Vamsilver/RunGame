@@ -121,13 +121,6 @@ namespace RunGame.EditorTools
                 Object.DestroyImmediate(band.GetComponent<Collider>());
                 band.GetComponent<Renderer>().sharedMaterial = GetOrCreateMaterial("WarningMaterial", new Color(1f, 0.64f, 0.02f), 0.15f);
             }
-            GameObject warningLight = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            warningLight.name = "Warning Light";
-            warningLight.transform.SetParent(barrel.transform, false);
-            warningLight.transform.localPosition = new Vector3(0f, 1.18f, 0f);
-            warningLight.transform.localScale = Vector3.one * 0.25f;
-            Object.DestroyImmediate(warningLight.GetComponent<Collider>());
-            warningLight.GetComponent<Renderer>().sharedMaterial = GetOrCreateEmissiveMaterial("BarrelWarningLightMaterial", new Color(1f, 0.06f, 0.01f));
             CreateWorldLabel(barrel.transform, "EXPLOSIVE  •  IMPACT > 5.5", new Vector3(0f, 1.65f, 0f), new Color(1f, 0.7f, 0.12f));
             return barrel;
         }

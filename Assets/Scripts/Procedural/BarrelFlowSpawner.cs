@@ -32,7 +32,9 @@ namespace RunGame.Procedural
         private void Spawn(Transform point)
         {
             if (rollingBarrelPrefab == null || point == null) return;
-            Quaternion spawnRotation = point.rotation * rollingBarrelPrefab.transform.rotation;
+            // Keep the cylinder axle along Z even if a future prefab rebuild
+            // changes the orientation saved on the asset root.
+            Quaternion spawnRotation = point.rotation * Quaternion.Euler(90f, 0f, 0f);
             GameObject barrel = Instantiate(rollingBarrelPrefab, point.position, spawnRotation, transform);
             Rigidbody body = barrel.GetComponent<Rigidbody>();
             if (body != null)

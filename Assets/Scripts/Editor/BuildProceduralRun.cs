@@ -55,6 +55,17 @@ namespace RunGame.EditorTools
             EditorApplication.Exit(0);
         }
 
+        public static void RepairObstacleModulesFromCommandLine()
+        {
+            RemoveWarningLightFromStaticBarrel();
+            GameObject rollingBarrel = CreateRollingBarrelPrefab();
+            CreateRollingBarrelModule(rollingBarrel);
+            CreateSpinnerModule();
+            AssetDatabase.SaveAssets();
+            Debug.Log("Obstacle modules repaired: horizontal barrel flow, clean barrel visual, and damaging spinner.");
+            EditorApplication.Exit(0);
+        }
+
         private static GameObject CreateCoinModule()
         {
             GameObject root = CreateModuleBase("Coin Module", "COIN RUN", new Color(0.12f, 0.7f, 0.95f));
@@ -155,6 +166,7 @@ namespace RunGame.EditorTools
             body.isKinematic = true;
             body.interpolation = RigidbodyInterpolation.Interpolate;
             spinner.AddComponent<RotatingObstacle>();
+            spinner.AddComponent<DamageObstacle>();
 
             GameObject hub = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
             hub.name = "Spinner Hub";
@@ -170,8 +182,17 @@ namespace RunGame.EditorTools
                 blade.transform.localRotation = Quaternion.Euler(0f, i * 90f, 0f);
                 blade.transform.localScale = new Vector3(10f, 0.45f, 0.65f);
                 blade.GetComponent<Renderer>().sharedMaterial = GetMaterial("HazardMaterial");
-                blade.AddComponent<DamageObstacle>();
             }
+        }
+
+        private static void RemoveWarningLightFromStaticBarrel()
+        {
+            const string path = "Assets/Prefabs/Obstacles/ExplosiveBarrel.prefab";
+            GameObject contents = PrefabUtility.LoadPrefabContents(path);
+            Transform warningLight = contents.transform.Find("Warning Light");
+            if (warningLight != null) Object.DestroyImmediate(warningLight.gameObject);
+            PrefabUtility.SaveAsPrefabAsset(contents, path);
+            PrefabUtility.UnloadPrefabContents(contents);
         }
 
         private static GameObject CreateModuleBase(string name, string label, Color accent)
@@ -274,6 +295,8 @@ namespace RunGame.EditorTools
             GameObject barrel = (GameObject)PrefabUtility.InstantiatePrefab(staticPrefab);
             PrefabUtility.UnpackPrefabInstance(barrel, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
             barrel.name = "Rolling Explosive Barrel";
+            Transform warningLight = barrel.transform.Find("Warning Light");
+            if (warningLight != null) Object.DestroyImmediate(warningLight.gameObject);
             // A barrel moving across X needs its axle along Z, so rotate the
             // cylinder's default Y axis onto Z.
             barrel.transform.rotation = Quaternion.Euler(90f, 0f, 0f);

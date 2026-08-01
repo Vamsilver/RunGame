@@ -30,13 +30,14 @@ namespace RunGame.EditorTools
                 Require(AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/Prefabs/Modules/{name}.prefab") != null, $"{name} missing");
             GameObject spinner = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/DamageSpinnerModule.prefab");
             Require(spinner.GetComponentInChildren<RotatingObstacle>(true) != null, "Damage spinner must rotate");
-            Require(spinner.GetComponentsInChildren<DamageObstacle>(true).Length >= 2, "Damage spinner blades must deal damage");
+            Require(spinner.GetComponentInChildren<DamageObstacle>(true) != null, "Damage spinner Rigidbody root must deal damage");
             GameObject rollingBarrel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Modules/RollingExplosiveBarrel.prefab");
             Require(rollingBarrel != null, "Rolling barrel prefab missing");
             Vector3 axle = rollingBarrel.transform.rotation * Vector3.up;
             Require(Mathf.Abs(Vector3.Dot(axle.normalized, Vector3.forward)) > 0.99f, "Rolling barrel axle must be horizontal along Z");
             GameObject staticBarrel = AssetDatabase.LoadAssetAtPath<GameObject>("Assets/Prefabs/Obstacles/ExplosiveBarrel.prefab");
             Require(staticBarrel != null, "Static barrel prefab missing");
+            Require(staticBarrel.transform.Find("Warning Light") == null, "Decorative barrel warning light must be removed");
             Require(rollingBarrel.transform.childCount == staticBarrel.transform.childCount, "Rolling and static barrels must share the same visual child structure");
             Require(rollingBarrel.GetComponent<Rigidbody>() != null && !rollingBarrel.GetComponent<Rigidbody>().isKinematic, "Rolling barrel must use dynamic physics");
             List<int> first = ProceduralRunManager.GenerateModuleSequence(123456, 12, 6);
